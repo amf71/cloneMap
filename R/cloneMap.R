@@ -32,16 +32,17 @@
 #' phylogenetic relationship (column1 = parent, column2 = child). All clones
 #' must be contained in the tree or they will not be plotted (see example data).
 #' 
-#' @param CCF.data A table indicating CCFs for each clone in the tree (see example data).
+#' @param CCF.data A table indicating CCFs for each clone in the tree (column
+#'  names are "clones" and "CCF", see example data).
 #' 
 #' @param Clone_map Instead of providing a tree and CCF table you may provide
-#' a `Clone_map` object which has previously been outputted by using 
-#' `output.Clone.map.obj` is TRUE. This contains data specifying tree structure
-#' and the positions of clones. When inputting a tree and CCF table clones 
-#' positions are randomly generated but when inputting a `Clone_map` they will
-#' be the same each time as postions are recorded in the input.
+#' a `Clone_map` object which has previously been outputted by setting 
+#' `output.Clone.map.obj` as TRUE. This contains data specifying tree structure
+#' and the positions of clones. When inputting a tree and a CCF table, clone 
+#' positions are semi-randomly generated but when inputting a `Clone_map` postions
+#' will be the identical each time as the postions are recorded in the input.
 #' 
-#' @param output.Clone.map.obj Do you want to output a Clone_map object containing
+#' @param output.Clone.map.obj If TRUE output a Clone_map object containing
 #' informtion on the positions of clones. This object can be saved and repeatly 
 #' provided back to the `Clone_map` argument of this function to reproduce precisely 
 #' the same plot.
@@ -51,7 +52,7 @@
 #' 
 #' @param high_qualty_mode This activates several mechanisms to ensure high quality plots
 #' at the expense of longer running times, particularly so for some input data. These
-#' mechanisms attempt to aviod plots where the same clone seperately into several islands,
+#' mechanisms attempt to aviod plots where the same clone seperates into several islands,
 #' and hence is noot continuous with itself, as well as interweaving of clones. 
 #' 
 #' @param track Provide extra feedback on progress of function. Useful when high_qualty_mode
@@ -80,7 +81,7 @@
 #' @param repeat.limit When `high_qualty_mode` is TRUE the function will test each clone for 
 #' continuity (ie that there are not multiple islands or patches of the same clone) and if
 #' so it will plot this clone and all its sisters again to attempt to aviod this
-#' as clone postionss are semi-randomly generated. `repeat.limit` indicates the maximum number of 
+#' as clone postions are semi-randomly generated. The `repeat.limit` indicates the maximum number of 
 #' allowed repeats before the function will output a warning and continue with the plot.
 #' These repeats increase run time significantly when high_qualty_mode` is TRUE. After two 
 #' repeats the function will use various mechanisms to decrese the probability of non-contiinuous
@@ -94,18 +95,17 @@
 #' 
 #' @author 
 #' 
-#' Alexander M Frankell, Francis Crick institute, University College London, \email{alexander.frankell@@crick.ca.uk}
+#' Alexander M Frankell, Francis Crick institute, University College London, \email{alexander.frankell@@crick.ac.uk}
 #' 
 #' @examples 
-#' load( tree_example )
-#' load( CCFs_example )
+#' # example objects provided in env after loading package #
 #' 
-#' cloneMaps( tree_example, CCFs_example )
+#' Clone_map( tree_example, CCFs_example )
 #' 
 #' # Use a Clone_map object to  plot cloneMap reproducably #
 #' 
 #' Clone_map <- cloneMaps( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
-#' cloneMaps( Clone_map = Clone_map )
+#' Clone_map( Clone_map = Clone_map )
 #' 
 #' 
 #' # specify colours #
@@ -119,7 +119,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
                        resolution.index = 100,  smoothing.par = 10, repeat.limit = 4 ){
   
-  # how many core do you haave access to for parrelellisation? #
+  # how many core do you have access to for parrelellisation? #
   num_cores <- detectCores() / 2
   # only worth parrellelising if > 10 cores, otheriwise actually slows code! - need to test further #
   if( num_cores < 10 ) num_cores <- 1
@@ -128,10 +128,15 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   cat( "formatting and cleaning input data...\n" )
   
   ## check we have some input ##
-  if( is.na(tree.mat) & is.na(CCF.data) & is.na(Clone_map) ) stop( "Please provide either a phylogenetics tree matric and a CCF table or a Clone_map object")
+  
+  clone_map_data_supplied <- !all( is.na(Clone_map) )
+  CFF_data_supplied <- !all( is.na(CCF.data) )
+  tree_data_supplied <- !all( is.na(tree.mat) )
+  
+  if( !clone_map_data_supplied & !CFF_data_supplied & !CFF_data_supplied ) stop( "Please provide either a phylogenetics tree matric and a CCF table or a Clone_map object")
   
   # if tree supplied in raster input then extract from here #
-  if( !is.na(Clone_map) ){
+  if( clone_map_data_supplied ){
     
     # check class is correct (ie is it expected output from this function) #
     if( ! class(Clone_map) == "Clone map" ) stop( "incorrect raster input" )
@@ -143,12 +148,18 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   tree.mat <- as.matrix( tree.mat )
   
   # get colours for plotting if these are not provided #
-  if( all( is.na(clone.cols) ) ){
+  clone_colours_supplied <- !all( is.na(clone.cols) )
+  
+  if( !clone_colours_supplied ){
     
     # order the tree so the trunk and earl clones are always the same colours accross tumours #
     if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree(tree.mat)
     
     clones <- unique( as.numeric(c(tree.mat[,1], tree.mat[,2]) ) )
+    
+    #subset for clones also in CCF table
+    if( CFF_data_supplied ) clones <- clones[ clones %in% CCF.data$clones ]
+    
     # supress warning - gets max number of colours from pallette - none have > 12 #
     getPalette <- suppressWarnings( colorRampPalette( brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
     clone.cols <- getPalette( length( clones ) )
@@ -157,8 +168,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   }
   
   ## if the raster data already supplied, skip the main steps and just plot the rasterised data ##
-  clone_map_data_supplied <- !all( is.na(Clone_map) )
-  
+
   if( !clone_map_data_supplied ){
     
     #####################################################
