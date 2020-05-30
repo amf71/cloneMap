@@ -1,25 +1,35 @@
 ### code to prepare example input files for cloneMap() function ###
 
-CCFs_example <- data.frame( clones = 1:10, 
-			                   CCF = c(1, 0.4, 0.1, 0.05, 0.8, 0.3, 0.25, 0.1, 0.15, 0.17) , stringsAsFactors = F)
+CCFs_example <- data.frame( clones = 1:11, 
+			                   CCF = c(1, 0.4, 0.45, 0.05, 0.3, 0.15, 0.2, 0.1, 0.15, 0.07, 0.15) , stringsAsFactors = F)
+
+CCFs_simple_example <- data.frame( clones = c(1, 2, 4, 5), 
+                                   CCF = c(1, 0.4, 0.02, 0.2) , stringsAsFactors = F)
 
 # tree matricies are written with each relaationship as a row, #
 # the parent as the first column and child as th second        #
 
-tree_example <- matrix( c(1, 5,
-                          5, 2,
+tree_example <- matrix( c(1, 2,
                           1, 3,
                           1, 4,
-                          2, 7,
+                          2, 5,
+                          3, 7,
+                          3, 8,
+                          3, 9, 
+                          5, 11,
                           5, 6, 
-                          6, 7,
-                          6, 8,
-                          2, 9,
-                          2, 10 ), ncol = 2, byrow = TRUE )
+                          7, 10 ), ncol = 2, byrow = TRUE )
 
 
-clone_colours_example <- c( "#1B9E77", "#AE6D1C", "#A16864", "#9B58A5", "#D8367D",
-                            "#749829", "#BBA90B", "#C9930D", "#97722D", "#666666" ) 
+clones <- unique( as.numeric(c(tree_example[,1], tree_example[,2]) ) )
+getPalette <- colorRampPalette( brewer.pal( 8, "Dark2") )
+clone_colours_example <- getPalette( length( clones ) )
+
+# OR #
+
+clone_colours_example <- c( "#1B9E77", "#A07125", "#B16548", "#8068AE", "#D03792",
+                            "#A66753", "#7FA718", "#D9AA04", "#BF8B12", "#927132",
+                            "#666666" ) 
 
 names(clone_colours_example) <- CCFs_example$clones
 
