@@ -18,7 +18,7 @@ Imports:
 	raster,
 	RColorBrewer,
 	parallel,
-	amf71
+	amfFunctions
 Remotes: 
 	amf71/amfFunctions
 RoxygenNote: 7.1.0
