@@ -26,16 +26,17 @@ Clone_map(
 phylogenetic relationship (column1 = parent, column2 = child). All clones
 must be contained in the tree or they will not be plotted (see example data).}
 
-\item{CCF.data}{A table indicating CCFs for each clone in the tree (see example data).}
+\item{CCF.data}{A table indicating CCFs for each clone in the tree (column
+names are "clones" and "CCF", see example data).}
 
 \item{Clone_map}{Instead of providing a tree and CCF table you may provide
-a `Clone_map` object which has previously been outputted by using 
-`output.Clone.map.obj` is TRUE. This contains data specifying tree structure
-and the positions of clones. When inputting a tree and CCF table clones 
-positions are randomly generated but when inputting a `Clone_map` they will
-be the same each time as postions are recorded in the input.}
+a `Clone_map` object which has previously been outputted by setting 
+`output.Clone.map.obj` as TRUE. This contains data specifying tree structure
+and the positions of clones. When inputting a tree and a CCF table, clone 
+positions are semi-randomly generated but when inputting a `Clone_map` postions
+will be the identical each time as the postions are recorded in the input.}
 
-\item{output.Clone.map.obj}{Do you want to output a Clone_map object containing
+\item{output.Clone.map.obj}{If TRUE output a Clone_map object containing
 informtion on the positions of clones. This object can be saved and repeatly 
 provided back to the `Clone_map` argument of this function to reproduce precisely 
 the same plot.}
@@ -45,7 +46,7 @@ the same plot.}
 
 \item{high_qualty_mode}{This activates several mechanisms to ensure high quality plots
 at the expense of longer running times, particularly so for some input data. These
-mechanisms attempt to aviod plots where the same clone seperately into several islands,
+mechanisms attempt to aviod plots where the same clone seperates into several islands,
 and hence is noot continuous with itself, as well as interweaving of clones.}
 
 \item{track}{Provide extra feedback on progress of function. Useful when high_qualty_mode
@@ -74,7 +75,7 @@ for visual appeal. The higher this parameter the more smoothing will occur.}
 \item{repeat.limit}{When `high_qualty_mode` is TRUE the function will test each clone for 
 continuity (ie that there are not multiple islands or patches of the same clone) and if
 so it will plot this clone and all its sisters again to attempt to aviod this
-as clone postionss are semi-randomly generated. `repeat.limit` indicates the maximum number of 
+as clone postions are semi-randomly generated. The `repeat.limit` indicates the maximum number of 
 allowed repeats before the function will output a warning and continue with the plot.
 These repeats increase run time significantly when high_qualty_mode` is TRUE. After two 
 repeats the function will use various mechanisms to decrese the probability of non-contiinuous
@@ -91,15 +92,14 @@ size, ie the Cancer Cell Fraction (CCF), and for phylogenetic relationships
 between clones
 }
 \examples{
-load( tree_example )
-load( CCFs_example )
+# example objects provided in env after loading package #
 
-cloneMaps( tree_example, CCFs_example )
+Clone_map( tree_example, CCFs_example )
 
 # Use a Clone_map object to  plot cloneMap reproducably #
 
 Clone_map <- cloneMaps( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
-cloneMaps( Clone_map = Clone_map )
+Clone_map( Clone_map = Clone_map )
 
 
 # specify colours #
@@ -109,5 +109,5 @@ cloneMaps( tree_example, CCFs_example, clone.cols = clone_colours_example )
 
 }
 \author{
-Alexander M Frankell, Francis Crick institute, University College London, \email{alexander.frankell@crick.ca.uk}
+Alexander M Frankell, Francis Crick institute, University College London, \email{alexander.frankell@crick.ac.uk}
 }
