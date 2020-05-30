@@ -24,21 +24,100 @@
 
 #' Construct clone maps
 #'
-#' Function to represent somatic clones present in a sample accounting for clone
+#' Function to represent somatic clones present in a tissue accounting for clone
 #' size, ie the Cancer Cell Fraction (CCF), and for phylogenetic relationships 
 #' between clones
 #'
 #' @param tree.mat A phylogenetic tree matrix with two columns and one row per 
-#' phylogenetic relationship (column1 = parent, column2 = child). AAll clones
-#' must be contained in the tree or they will not be plotted
-#' @param CCF.data A table indicating CCFs for each clone in the tree
+#' phylogenetic relationship (column1 = parent, column2 = child). All clones
+#' must be contained in the tree or they will not be plotted (see example data).
 #' 
+#' @param CCF.data A table indicating CCFs for each clone in the tree (see example data).
+#' 
+#' @param Clone_map Instead of providing a tree and CCF table you may provide
+#' a `Clone_map` object which has previously been outputted by using 
+#' `output.Clone.map.obj` is TRUE. This contains data specifying tree structure
+#' and the positions of clones. When inputting a tree and CCF table clones 
+#' positions are randomly generated but when inputting a `Clone_map` they will
+#' be the same each time as postions are recorded in the input.
+#' 
+#' @param output.Clone.map.obj Do you want to output a Clone_map object containing
+#' informtion on the positions of clones. This object can be saved and repeatly 
+#' provided back to the `Clone_map` argument of this function to reproduce precisely 
+#' the same plot.
+#' 
+#' @param plot.data Plot the cloneMap visualisation now. This may not be desirable if
+#' `output.Clone.map.obj` is set to TRUE. 
+#' 
+#' @param high_qualty_mode This activates several mechanisms to ensure high quality plots
+#' at the expense of longer running times, particularly so for some input data. These
+#' mechanisms attempt to aviod plots where the same clone seperately into several islands,
+#' and hence is noot continuous with itself, as well as interweaving of clones. 
+#' 
+#' @param track Provide extra feedback on progress of function. Useful when high_qualty_mode
+#' is TRUE. 
+#' 
+#' @param brewer.palette A qualitative colour pallette from the `RColourBrewer` package to use for the
+#' clones.  
+#' 
+#' @param clone.cols A named vector specifying hexidecimal colours for all clones in your 
+#' input (see example). This allows you to keep consistent colours for the same clone 
+#' accross several plots with different inputs, for instance if you wish to plot cloneMaps
+#' for each of several samples from the same tumour. 
+#' 
+#' @param border.colour The colour of the clone borders.
+#' 
+#' @param border.thickness The thickness of the clone borders.
+#' 
+#' @param resolution.index This indicates the resolution of the model representing clonal
+#' growth. More precisely it is the diameter of the rasterised matrix in which each piont
+#' represents a position where a clone can reside. A higher resultion index will allow more
+#' precise positioning of clones but also increase running time. 
+#' 
+#' @param smoothing.par Smoothing parameter for the clones. Edges of the clones are smoothened
+#' for visual appeal. The higher this parameter the more smoothing will occur. 
+#' 
+#' @param repeat.limit When `high_qualty_mode` is TRUE the function will test each clone for 
+#' continuity (ie that there are not multiple islands or patches of the same clone) and if
+#' so it will plot this clone and all its sisters again to attempt to aviod this
+#' as clone postionss are semi-randomly generated. `repeat.limit` indicates the maximum number of 
+#' allowed repeats before the function will output a warning and continue with the plot.
+#' These repeats increase run time significantly when high_qualty_mode` is TRUE. After two 
+#' repeats the function will use various mechanisms to decrese the probability of non-contiinuous
+#' clones even further but at the expense of even longer run times.
+#'  
+#' 
+#' 
+#' @return A `Clone_map` object will be returned if `output.Clone.map.obj` is TRUE
+#' containing information on clonal positions and tree structure. This output can 
+#' be inputted using the `Clone_map` argument to repeat the same plot many times.
+#' 
+#' @author 
+#' 
+#' Alexander M Frankell, Francis Crick institute, University College London, \email{alexander.frankell@@crick.ca.uk}
+#' 
+#' @examples 
+#' load( tree_example )
+#' load( CCFs_example )
+#' 
+#' cloneMaps( tree_example, CCFs_example )
+#' 
+#' # Use a Clone_map object to  plot cloneMap reproducably #
+#' 
+#' Clone_map <- cloneMaps( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+#' cloneMaps( Clone_map = Clone_map )
+#' 
+#' 
+#' # specify colours #
+#' 
+#' load( clone_colours_example )
+#' cloneMaps( tree_example, CCFs_example, clone.cols = clone_colours_example )
 #' 
 #' @export
-Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, resolution.index = 100, 
-                       brewer.palette = "Paired", smoothing.par = 10, clone.cols = NA, 
-                       output.rastered.data = FALSE, plot.data = TRUE, border.thickness = 1.5,
-                       border.colour = "grey20", repeat.limit = 4, track = FALSE, high_qualty_mode = FALSE ){
+Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clone.map.obj = FALSE,
+                       plot.data = TRUE, high_qualty_mode = FALSE, track = FALSE, brewer.palette = "Paired",
+                       clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
+                       resolution.index = 100,  smoothing.par = 10, repeat.limit = 4 ){
   
   # how many core do you haave access to for parrelellisation? #
   num_cores <- detectCores() / 2
@@ -47,6 +126,9 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, resolution.
   
   # signpost #
   cat( "formatting and cleaning input data...\n" )
+  
+  ## check we have some input ##
+  if( is.na(tree.mat) & is.na(CCF.data) & is.na(Clone_map) ) stop( "Please provide either a phylogenetics tree matric and a CCF table or a Clone_map object")
   
   # if tree supplied in raster input then extract from here #
   if( !is.na(Clone_map) ){
@@ -67,7 +149,8 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, resolution.
     if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree(tree.mat)
     
     clones <- unique( as.numeric(c(tree.mat[,1], tree.mat[,2]) ) )
-    getPalette <- colorRampPalette( brewer.pal(9, brewer.palette) ) # brewer.palette specified in argumentss, default = "Paired"
+    # supress warning - gets max number of colours from pallette - none have > 12 #
+    getPalette <- suppressWarnings( colorRampPalette( brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
     clone.cols <- getPalette( length( clones ) )
     names(clone.cols) <- clones
     
@@ -636,114 +719,6 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, resolution.
   
 }
 
-## function to remove clones from a phenogenetic tree matrix while    ##
-## maintaining parent -> daughter reltionships,  even if intermediate ##
-## (branch) clone is being removed                                    ##
-
-remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = NA){
-  
-  # check that info have been provided on what clones to remove
-  if(all(is.na(clones.to.remove)) & all(is.na(clones.to.keep))){
-    stop("you have not provided info on which clones to remove")
-  }
-  
-  # check classes are correct #
-  clones.to.keep <- as.character( clones.to.keep )
-  tree <- as.matrix( tree )
-  
-  # define list of all clones in the tree #
-  all.clones <- unique(as.character(tree))
-  
-  # if clones to keep specific rather than clones         ##
-  # to remove then work out from this which to be removed ##
-  if(all(is.na(clones.to.remove))){
-    clones.to.remove <- setdiff(all.clones,clones.to.keep)
-  }
-  
-  # ensure class is correct and all clones specified to keep are in the tree matrix #
-  clones.to.remove <- as.character(clones.to.remove)
-  clones.to.keep <- clones.to.keep[clones.to.keep %in% all.clones]
-  
-  # if nothing to remove that is ctually ono the tree then just return the tree with a warning #
-  if(length(clones.to.remove)==0){
-    warning( "no clones specified to remove that are on the tree\n")
-    return(tree)
-  }
-  
-  # order the tree trunk -> branches -> leaves #
-  tree <- logically.order.tree(tree)
-  
-  # make sure its matric if only 1/0 relationships #
-  tree.mat <- matrix(tree.mat, ncol = 2, byrow = TRUE)
-  
-  # get the root clone #
-  root <- tree[ 1, 1 ]
-  
-  # if only the root left then return root as parent and daughter to maintaian the same structure #
-  if(all(clones.to.keep==root)){
-    return(matrix(c(root,root),ncol = 2, byrow = TRUE))
-  }
-  
-  # now loop round ecah clone to remove, get rid of all relationships its involved in and  #
-  # then reassign aany daughter(s) to its parent                                           #
-  for(clone in clones.to.remove){
-    parent <- tree[tree[,2]==clone,1]
-    if(any(tree[,1]==clone)){
-      daughters <- tree[tree[,1]==clone,2]
-      tree <- rbind(tree, matrix(c(rep(parent,length(daughters)),daughters),ncol = 2))
-    }
-    tree <- tree[!(tree[,1]==clone | tree[,2]==clone),]
-    if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree,ncol = 2,byrow = TRUE)
-  }
-  
-  # make sure its matric if only 1/0 relationships #
-  tree.mat <- matrix(tree.mat, ncol = 2, byrow = TRUE)
-  
-  # return pruned tree #
-  return(tree)
-  
-  # END #
-  
-}
-
-## function to order tree root -> branches -> leaves ##
-
-logically.order.tree <- function(tree){
-  
-  # if only 1 clone on tree then just output it as it is #
-  if(all(tree==unique(tree)[1])) return(tree)
-
-  ### assign levels to each parent clone depending on how near the trunk ###
-  
-  # work out the root (the only clone tht's never a daughter ) #
-  root <- tree[,1] [! tree[,1] %in% tree[,2] ]
-  
-  # make empty list for levels of ecah clone #
-  levels <- rep(NA,nrow(tree))
-  
-  # aasign the root to level 1 #
-  levels[tree[,1] %in% root ] <- 1
-  
-  # list aall the daughter's of root to work out the level #
-  daughters <- tree[ tree[,1] %in% root,2]
-  
-  # go down the tree in levels and asssign clenns correct levels #
-  l <- 1
-  repeat{
-    l <- l + 1
-    parents <- daughters
-    levels[ tree[,1] %in% parents ] <- l
-    daughters <- tree[ tree[,1] %in% parents, 2 ]
-    if( all( !is.na( levels ) ) ) break
-  }
-  
-  tree <- tree[ order( levels ) ,]
-  
-  # make sure its matric if only 1/0 relationships #
-  if( !class(tree.mat) == "matrix" ) tree.mat <- matrix(tree.mat, ncol = 2, byrow = TRUE)
-  
-  return(tree)
-}
 
 ## function to generate a distnce martix, specifiying how far away each piont in the raster matric   ##
 ## is from a central nucleus. So far managed two ways to calculaate this, one that specifiesdistance ##
@@ -981,69 +956,6 @@ recenter_distance_matrix <- function( clone_position ){
   
 }
 
-# functions to round to a specific base #
-mround <- function( x, base ) base * round( x / base )
-mfloor <- function( x, base ) base * floor( x / base )
-mceiling <- function( x, base ) base * ceiling( x / base )
 
-
-## function to correct CCFs when sum of daughters CCF > parent CCF ##
-
-make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , parent.adjust = 1,
-                                      decrease.daughters = TRUE, increase.parents = FALSE ){
-  
-  # one of decrease daughters or parents must be true
-  if( all( !decrease.daughters & !increase.parents ) ) cat( "Please set either decrease.daughters or decrease.parents arguments to TRUE or cannot correct tree\n" )
-  
-  # order tree trunk -> leaf #
-  tree.mat <- logically.order.tree( tree.mat )
-  
-  # get root #
-  root <- tree.mat[ 1, 1 ]
-  
-  # get ordered list of parents #
-  parent.order <- rev(unique(tree.mat[,1]))
-  
-  # detect if fractions or percentages #
-  is_frac <- CCF.data[ CCF.data$clones ==  root, "CCF" ] < 2
-  if( is_frac ) clonal_CCF <- 1 else clonal_CCF <- 100
-
-  # for each parent check if it has CCF < sum of daughters if so correct it #
-  for(parent in parent.order){
-    
-    # get names of daughteer clones #
-    daughters <- tree.mat[ tree.mat[, 1] == parent, 2 ]
-    
-    # get row indices for daughters and parent #
-    parentrow <- which( CCF.data$clones == parent )
-    daughterrows <- which( CCF.data$clones %in% daughters )
-    
-    # get CCF values #
-    parent.CCF <- CCF.data[ parentrow, "CCF" ]
-    daughter.total.CCF <- sum( CCF.data[ daughterrows, "CCF" ] )
-    
-    # if decrease parent == TRUE & daughter CCF > parent CCF then increase parent CCF to match daughters, then if #
-    # parent CCF > 1 then adjustt all CCFs on the tree to allow parent CCF < 1 #
-    # if decrease daughter == TRUE & daughter CCF > parent CCF then decrease daughter CCFs to match paarent, then if #
-    # parent adjust allows soome wiggle room for niose in CCF data - default = 0  howeever #
-    if( parent.adjust * parent.CCF < daughter.total.CCF ){
-      if( daughter.total.CCF / parent.CCF > warning.limit ){
-        if( decrease.daughters  )  type <- "Decreasing daughter CCFs proportionally" else type <- "Increasing parent CCF"
-        cat( paste0("        ", "clone ", parent, " has daughter(s) with ", signif( (daughter.total.CCF * clonal_CCF) / parent.CCF, 3 ), "% CCF of itself. ", type, "\n") )
-      }
-      if( increase.parents  ) CCF.data[ parentrow, "CCF" ] <- daughter.total.CCF * parent.adjust
-      if( decrease.daughters  ) CCF.data[ daughterrows, "CCF" ] <- sapply(daughterrows, function(rowi) (CCF.data[ rowi, "CCF" ] / daughter.total.CCF) * parent.CCF )
-    }
-  }
-  
-  # normalise to root #
-  # if the clonal cluster CCF needed to be increased then adjust this back down too 1 and adjust all other clones by similar margin #
-  if( any( CCF.data$CCF > clonal_CCF ) ) cat( paste0("        Clonal CCF needed increasing to accommodate daughters. Therefore decreasing all CCFs proportionally so clonal CCF == 1 again\n") )
-    
-  # ensure clonal cluster = 1 #
-  CCF.data$CCF <- ( (CCF.data$CCF * clonal_CCF) / CCF.data[ CCF.data$clones == root, "CCF"] ) 
-  
-  return( CCF.data )
-}
 
 

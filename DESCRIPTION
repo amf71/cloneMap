@@ -1,4 +1,4 @@
-Package: cloneMaps
+Package: cloneMap
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
@@ -17,7 +17,8 @@ Imports:
 	smoothr,
 	raster,
 	RColorBrewer,
-	parallel
+	parallel,
+	amfFunctions
 RoxygenNote: 7.1.0
 Depends: 
     R (>= 2.10)

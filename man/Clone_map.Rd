@@ -8,28 +8,106 @@ Clone_map(
   tree.mat = NA,
   CCF.data = NA,
   Clone_map = NA,
-  resolution.index = 100,
-  brewer.palette = "Paired",
-  smoothing.par = 10,
-  clone.cols = NA,
-  output.rastered.data = FALSE,
+  output.Clone.map.obj = FALSE,
   plot.data = TRUE,
-  border.thickness = 1.5,
-  border.colour = "grey20",
-  repeat.limit = 4,
+  high_qualty_mode = FALSE,
   track = FALSE,
-  high_qualty_mode = FALSE
+  brewer.palette = "Paired",
+  clone.cols = NA,
+  border.colour = "grey20",
+  border.thickness = 1.5,
+  resolution.index = 100,
+  smoothing.par = 10,
+  repeat.limit = 4
 )
 }
 \arguments{
 \item{tree.mat}{A phylogenetic tree matrix with two columns and one row per 
-phylogenetic relationship (column1 = parent, column2 = child). AAll clones
-must be contained in the tree or they will not be plotted}
+phylogenetic relationship (column1 = parent, column2 = child). All clones
+must be contained in the tree or they will not be plotted (see example data).}
 
-\item{CCF.data}{A table indicating CCFs for each clone in the tree}
+\item{CCF.data}{A table indicating CCFs for each clone in the tree (see example data).}
+
+\item{Clone_map}{Instead of providing a tree and CCF table you may provide
+a `Clone_map` object which has previously been outputted by using 
+`output.Clone.map.obj` is TRUE. This contains data specifying tree structure
+and the positions of clones. When inputting a tree and CCF table clones 
+positions are randomly generated but when inputting a `Clone_map` they will
+be the same each time as postions are recorded in the input.}
+
+\item{output.Clone.map.obj}{Do you want to output a Clone_map object containing
+informtion on the positions of clones. This object can be saved and repeatly 
+provided back to the `Clone_map` argument of this function to reproduce precisely 
+the same plot.}
+
+\item{plot.data}{Plot the cloneMap visualisation now. This may not be desirable if
+`output.Clone.map.obj` is set to TRUE.}
+
+\item{high_qualty_mode}{This activates several mechanisms to ensure high quality plots
+at the expense of longer running times, particularly so for some input data. These
+mechanisms attempt to aviod plots where the same clone seperately into several islands,
+and hence is noot continuous with itself, as well as interweaving of clones.}
+
+\item{track}{Provide extra feedback on progress of function. Useful when high_qualty_mode
+is TRUE.}
+
+\item{brewer.palette}{A qualitative colour pallette from the `RColourBrewer` package to use for the
+clones.}
+
+\item{clone.cols}{A named vector specifying hexidecimal colours for all clones in your 
+input (see example). This allows you to keep consistent colours for the same clone 
+accross several plots with different inputs, for instance if you wish to plot cloneMaps
+for each of several samples from the same tumour.}
+
+\item{border.colour}{The colour of the clone borders.}
+
+\item{border.thickness}{The thickness of the clone borders.}
+
+\item{resolution.index}{This indicates the resolution of the model representing clonal
+growth. More precisely it is the diameter of the rasterised matrix in which each piont
+represents a position where a clone can reside. A higher resultion index will allow more
+precise positioning of clones but also increase running time.}
+
+\item{smoothing.par}{Smoothing parameter for the clones. Edges of the clones are smoothened
+for visual appeal. The higher this parameter the more smoothing will occur.}
+
+\item{repeat.limit}{When `high_qualty_mode` is TRUE the function will test each clone for 
+continuity (ie that there are not multiple islands or patches of the same clone) and if
+so it will plot this clone and all its sisters again to attempt to aviod this
+as clone postionss are semi-randomly generated. `repeat.limit` indicates the maximum number of 
+allowed repeats before the function will output a warning and continue with the plot.
+These repeats increase run time significantly when high_qualty_mode` is TRUE. After two 
+repeats the function will use various mechanisms to decrese the probability of non-contiinuous
+clones even further but at the expense of even longer run times.}
+}
+\value{
+A `Clone_map` object will be returned if `output.Clone.map.obj` is TRUE
+containing information on clonal positions and tree structure. This output can 
+be inputted using the `Clone_map` argument to repeat the same plot many times.
 }
 \description{
-Function to represent somatic clones present in a sample accounting for clone
+Function to represent somatic clones present in a tissue accounting for clone
 size, ie the Cancer Cell Fraction (CCF), and for phylogenetic relationships 
 between clones
+}
+\examples{
+load( tree_example )
+load( CCFs_example )
+
+cloneMaps( tree_example, CCFs_example )
+
+# Use a Clone_map object to  plot cloneMap reproducably #
+
+Clone_map <- cloneMaps( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+cloneMaps( Clone_map = Clone_map )
+
+
+# specify colours #
+
+load( clone_colours_example )
+cloneMaps( tree_example, CCFs_example, clone.cols = clone_colours_example )
+
+}
+\author{
+Alexander M Frankell, Francis Crick institute, University College London, \email{alexander.frankell@crick.ca.uk}
 }
