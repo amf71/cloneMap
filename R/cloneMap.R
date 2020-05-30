@@ -120,7 +120,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
                        resolution.index = 100,  smoothing.par = 10, repeat.limit = 4 ){
   
   # how many core do you have access to for parrelellisation? #
-  num_cores <- detectCores() / 2
+  num_cores <- parallel::detectCores() / 2
   # only worth parrellelising if > 10 cores, otheriwise actually slows code! - need to test further #
   if( num_cores < 10 ) num_cores <- 1
   
@@ -153,7 +153,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   if( !clone_colours_supplied ){
     
     # order the tree so the trunk and earl clones are always the same colours accross tumours #
-    if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree(tree.mat)
+    if( nrow(tree.mat) > 1 ) tree.mat <- amfFunctions::logically.order.tree(tree.mat)
     
     clones <- unique( as.numeric(c(tree.mat[,1], tree.mat[,2]) ) )
     
@@ -161,7 +161,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     if( CFF_data_supplied ) clones <- clones[ clones %in% CCF.data$clones ]
     
     # supress warning - gets max number of colours from pallette - none have > 12 #
-    getPalette <- suppressWarnings( colorRampPalette( brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
+    getPalette <- suppressWarnings( colorRampPalette( RColourBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
     clone.cols <- getPalette( length( clones ) )
     names(clone.cols) <- clones
     
@@ -192,7 +192,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     # if this is the case print those which have been removed #
     if( !all( CCF.data$clones %in% tree.clones ) ){ 
       cat( paste0("        ", "clone(s) ", paste0(setdiff(tree.clones, CCF.data$clones), collapse = " "), " found in phylogenetic tree but not in CCF table. These have been removed\n" ) )
-      tree.mat <- remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones ) ## Function specified below and in FrankellA_functions.R script
+      tree.mat <- remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones ) 
     }
     
     # if tree has > one relationship, order the tree from Trunk -> branches -> leaves #
@@ -209,7 +209,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     # If this occurs a warning will be outputted with how much smaller the parent CCF is than its childern #
     # given noise in CCF caluculations mean we can accept some underestimate of parent CCF but if children # 
     # > 130% of parent this should be checked and tree/clones/CCFs may be incorrect                        #
-    CCF.data <- make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
+    CCF.data <- amfFunction::make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
     
     
     ######===============================================================######
@@ -278,11 +278,14 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       # ensure raster is class numeric not char #
       clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
       
+      # make raster class #
+      rasterPlot <- raster::raster( clones_rasterised_plot )
+      
       # set up plot extent #
-      plot( rasterToPolygons( raster( clones_rasterised_plot ) ), col = NA, border = NA) 
+      plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
       
       ## plot the clonal clone ##
-      plot <- st_as_sf(rasterToPolygons(raster(clones_rasterised_plot), function(x){x == root}, dissolve = TRUE))
+      plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == root}, dissolve = TRUE) )
       
       # add smoothnig to make it more visually appealling #
       # note: smoothing will make the plotted area slightly underestmiate the true area but by only very little #
@@ -291,11 +294,10 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       plot.smooth <- smooth(plot, method = "ksmooth", smoothness= smoothing.par)
       
       # specify border thickness & colour in arguments - default is 1.5 & grey #
-      plot(plot.smooth, col = clone.cols[ names( clone.cols ) == root ], border = border.colour, lwd = border.thickness, add = TRUE) 
+      plot( plot.smooth, col = clone.cols[ names( clone.cols ) == root ], border = border.colour, lwd = border.thickness, add = TRUE ) 
       
     }
     
-    # now if 
     
     ##################################
     ### Add the subclonal clusters ###
@@ -312,10 +314,10 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     
     # when loop around parents, we need to record the distance matrices and cut offs used for each parental clone #
     # start by recording this for the clonal cluster #
-    parent.dists <- list(dist.mat)
-    names(parent.dists) <- root
-    parent_distance_cutoffs <- c(distance_cutoff)
-    names(parent_distance_cutoffs) <- root
+    parent.dists <- list( dist.mat )
+    names( parent.dists ) <- root
+    parent_distance_cutoffs <- c( distance_cutoff )
+    names( parent_distance_cutoffs ) <- root
     
     # signpost #
     cat( "\ngenerating subclone distributions...\n" )
@@ -396,7 +398,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           } 
           
           # convert raster matrix TRUE positions to cordinates for possible nucleation #
-          nucleus.options <- matrix.index.to.coordinates( matrix.index = which( nucleus.options ), nrow = nrow( clones_rasterised ), ncol = ncol( clones_rasterised ) )
+          nucleus.options <- matrix.index.to.coordinates( matrix.index = which( nucleus.options ), nrow = nrow( clones_rasterised ), ncol = ncol( clones_rasterised ) ) ## Function specified below
           
           # randomly select 20 sets of n (n = number of clones) nuclei for clones - might be better which more but distance caluclatioons will take longer #
           nuclei_sample_number = 20
@@ -419,7 +421,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
               dists <- make.distance.matrix( clones_rasterised_blank, nucleus = as.numeric( nucleus.option[i,  ] ) )
               
               # having tested, its faster to parrellelise here than in outer apply #
-              dists <- unlist( mclapply( which( !1:nrow( nucleus.option ) == i ), function(i2) dists[ nucleus.option[ i2, "x" ], nucleus.option[ i2, "y" ] ], mc.cores = num_cores ))
+              dists <- unlist( parallel::mclapply( which( !1:nrow( nucleus.option ) == i ), function(i2) dists[ nucleus.option[ i2, "x" ], nucleus.option[ i2, "y" ] ], mc.cores = num_cores ))
               
               return( min( dists ) )
             })
@@ -464,7 +466,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
         ##############################################################
         
         # extract new distance matricies for each of these new nuclei #
-        nuclei.dists <- lapply( 1:length( nuclei ), function(i) make.distance.matrix( clones_rasterised, nucleus = nuclei[[i]] ) )
+        nuclei.dists <- lapply( 1:length( nuclei ), function(i) make.distance.matrix( clones_rasterised, nucleus = nuclei[[i]] ) ) ## make.distance.matrix function specified below
         names( nuclei.dists ) <- daughters
         
         # just check that nuclei are defninitely within the parent (found this error a few times) #
@@ -489,7 +491,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
         growth.rate <-  resolution.index / rate.modifier
         
         # caluclate max grow for biggest clone #
-        max_growth <- mceiling( max(clone.areas), growth.rate) ## function mceiling is below
+        max_growth <- amfFunction::mceiling( max(clone.areas), growth.rate)
 
         #don't strt grow from 0 to save time - grow in one step until the point you might encourter other clones #
         # if only one daughter clone then you don't need to grow them at all - go straight to max size #
@@ -497,7 +499,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           
           # shuold be able to grow first to where none of them are touching to speed things up #
           # Use minimum distance between clones nucleo to calculate this #
-          min_growth <-  mfloor( sum( nuclei.dists[[1]] < nuclei_min_distance * 0.45 ),  growth.rate ) ## function mfloor is below
+          min_growth <-  amfFunctions::mfloor( sum( nuclei.dists[[1]] < nuclei_min_distance * 0.45 ),  growth.rate ) ## function mfloor is below
           
         }
         
@@ -572,7 +574,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
         }
         
         # recenter the clones depending on how they've grown  #
-        nuclei.dists <- lapply( 1:length(daughters), function(i) recenter_distance_matrix( clone_position = clones_rasterised == daughters[i] ) )
+        nuclei.dists <- lapply( 1:length(daughters), function(i) recenter_distance_matrix( clone_position = clones_rasterised == daughters[i] ) )  # recenter_distance_matrix function below
         names(nuclei.dists) <- daughters
         # extract new cut offs - just use the max distance away from nucleus where each clone is #
         distance_cutoffs <- sapply( 1:length(daughters), function(i) max( nuclei.dists[[i]][ clones_rasterised == daughters[i] ] ) )
@@ -604,7 +606,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           # signpost #
           if( track ) cat( paste0( "\n        ", "checking that clones are continuoous...\n" ) )
           
-          are_continuous <- sapply( daughters, function(clone) continuous.test( clone_position = clones_rasterised == clone ) ) 
+          are_continuous <- sapply( daughters, function(clone) continuous.test( clone_position = clones_rasterised == clone ) ) ## continuous.test function specified below
           if( all( are_continuous ) ){
             
             break
@@ -635,9 +637,12 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           # ensure raster is numeric #
           clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
           
-          plot <- st_as_sf( rasterToPolygons( raster( clones_rasterised_plot ), function(x){ x == clone }, dissolve = TRUE) )
-          plot.smooth <- smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par specified in arguemnts
-          plot(plot.smooth, col = clone.cols[names(clone.cols)==clone], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguemnts and col can be specified in arguments
+          # convert to class raster #
+          rasterPlot <- raster::raster( clones_rasterised_plot )
+          
+          plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){ x == clone }, dissolve = TRUE) )
+          plot.smooth <- smooth(plot, method = "ksmooth", smoothness = smoothing.par) # smoothing par specified in arguemnts
+          plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = "grey20", lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
           
         }
         
@@ -657,7 +662,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     }
     
     
-  } else {  ## if !is.na(Clone_map)
+  } else {  ## if clone_map_data_supplied
     
     ######===================================================================================######
     ######                                                                                   ######
@@ -680,7 +685,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     clones_rasterised_plot <- clones_rasterised_plot
     clones_rasterised_plot[] <- 0 
     clones_rasterised_plot <- apply( clones_rasterised_plot, 1, as.numeric )
-    blank.plot <- rasterToPolygons( raster( clones_rasterised_plot ) )
+    blank.plot <- raster::rasterToPolygons( raster::raster( clones_rasterised_plot ) )
     plot( blank.plot, col = NA, border = NA ) # set up plot extent
     
     # signpost #
@@ -713,9 +718,11 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       clones_rasterised_plot[ clones_rasterised_plot %in% clone.daughters ] <- clone
       clones_rasterised_plot <- apply(clones_rasterised_plot,1,as.numeric)
       
-      # plot the clone #
+      # convert to class raster #
+      rasterPlot <- raster::raster(clones_rasterised_plot)
       
-      plot <- st_as_sf(rasterToPolygons(raster(clones_rasterised_plot), function(x){x == clone}, dissolve = TRUE))
+      # plot the clone #
+      plot <- sf::st_as_sf( raster::rrasterToPolygons(  rasterPlot, function(x){x == clone}, dissolve = TRUE))
       plot.smooth <- smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par speicified in arguemnts
       plot(plot.smooth, col = clone.cols[names(clone.cols)==clone], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguemnts and col can be specified in arguments
       
@@ -841,11 +848,11 @@ matrix.index.to.coordinates <- function( matrix.index, nrow, ncol ){
   
 }
 
-# function to convert (x = row, y = col) coordinates intoo a boolean matrix #
-# can input either single coordinate or data.frame of coordinates           #
-# also need to input matrix outline (number of cols and rows)               #
+# function to convert (x = row, y = col) coordinates into a boolean matrix #
+# can input either single coordinate or data.frame of coordinates also     #
+# need to input matrix outline (number of cols and rows)                   #
 
-coordinates.to.matrix.index <- function(coordinates,nrow,ncol){
+coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
   
   if(class(coordinates)=="numeric"){
     return( ( ( coordinates[1] - 1 ) * ncol ) + coordinates[2] )
@@ -861,17 +868,15 @@ coordinates.to.matrix.index <- function(coordinates,nrow,ncol){
 # ie does the clone seperate into different 'islands'. This is porobably biologicallly implausible so    #
 # should be avioded if possible                                                                          #
 
-#at the moment this doesn't work very well - will only pick up really bad cases but this is fine for now
-# disabled this for now - set P value theshold to 1.1
 continuous.test <- function( clone_position ){
   
   # how many core do you haave access to for parrelellisation? #
-  num_cores <- detectCores() / 2
+  num_cores <- parallel::detectCores() / 2
   # only worth parrellelising if > 10 cores, otheriwise actually slows code! - need to test further #
   if( num_cores < 10 ) num_cores <- 1
   
   # get cordinataes of all position for this clone #
-  coords <- as.data.table( matrix.index.to.coordinates( which( clone_position ), nrow = nrow( clone_position ), ncol = ncol( clone_position ) ) )
+  coords <- as.data.table( matrix.index.to.coordinates( which( clone_position ), nrow = nrow( clone_position ), ncol = ncol( clone_position ) ) ) # matrix.index.to.coordinates specified above
   coords_ids <- paste(coords[, x] , coords[, y], sep = "_" )
   
   # make as list #
@@ -879,7 +884,7 @@ continuous.test <- function( clone_position ){
   
   
   # get surronuding cords coordinates for each cooord #
-  coords.surrounding.id.list <- mclapply( coords.list, function(coord) c( coord[, paste( x + 1, y, sep = "_" ) ],
+  coords.surrounding.id.list <- parallel::mclapply( coords.list, function(coord) c( coord[, paste( x + 1, y, sep = "_" ) ],
                                                                           coord[, paste( x - 1, y, sep = "_" ) ],
                                                                           coord[, paste( x, y + 1, sep = "_" ) ],
                                                                           coord[, paste( x, y - 1, sep = "_" ) ],
@@ -897,14 +902,14 @@ continuous.test <- function( clone_position ){
   # this also holds true for just the edges and this is faster so limit to these #
   
   # identify edge positions #
-  # these are htose coord surrounded by at least 1 coord which is not part of the clone #
+  # these are those coords surrounded by at least 1 coord which is not part of the clone #
   is_edge <- sapply( 1:length( coords.list ), function(i) any( !coords.surrounding.id.list[[i]] %in% coords_ids  ) )
   
-  # now make a list of all the edge coords #
+  # now make a lists of all the edge coords and thier surrrounding coords #
   coords_ids_edge <- coords_ids[ which( is_edge ) ]
   coords_edge_surrounding_id_list <- coords.surrounding.id.list[ is_edge ]
   
-  # chosoe an edge coord at random #
+  # chose an edge coord at random #
   edges_continuous <- coords_ids_edge[[ sample( 1:length( coords_ids_edge ), 1 ) ]]
   
   repeat{
@@ -945,7 +950,7 @@ recenter_distance_matrix <- function( clone_position ){
   new_nucleus <- c( x, y )
   
   ## use this as nucleus for a new distrebution ##
-  new.dist <- make.distance.matrix( clone_position, new_nucleus )
+  new.dist <- make.distance.matrix( clone_position, new_nucleus ) # make.distance.matrix function specified above
   
   ## make sure new nucleus is within clone
   new_nucleus_in_clone <- any( new.dist == 0 & clone_position )
@@ -956,7 +961,7 @@ recenter_distance_matrix <- function( clone_position ){
     # matrix.index.to.coordinates ooupuuts data.frame just take the first option -       #
     # could be muplie nuclei if if several positions have minimum disttnce to new nulcei #
     nucleus.index <- which( new.dist == min( new.dist[ clone_position ]) )
-    new_nucleus <- as.numeric( matrix.index.to.coordinates( matrix.index = nucleus.index, nrow =  nrow(clone_position),  ncol = ncol(clone_position))[ 1 ,])
+    new_nucleus <- as.numeric( matrix.index.to.coordinates( matrix.index = nucleus.index, nrow =  nrow(clone_position),  ncol = ncol(clone_position))[ 1 ,]) # make.distance.matrix function specified above
     
     new.dist <- make.distance.matrix( clone_position, new_nucleus )
     
@@ -967,5 +972,8 @@ recenter_distance_matrix <- function( clone_position ){
 }
 
 
+#===========#
+###  END  ###
+#===========#
 
 
