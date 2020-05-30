@@ -7,7 +7,7 @@
 # 
 # Clone_map = NA; resolution.index = 100;
 # brewer.palette = "Paired"; smoothing.par = 10; clone.cols = NA;
-# output.rastered.data = FALSE; plot.data = TRUE; border.thickness = 1.5;
+# output.Clone.map.obj = FALSE; plot.data = TRUE; border.thickness = 1.5;
 # border.colour = "grey20"; repeat.limit = 4; track = TRUE; high_qualty_mode = TRUE
 # ## load libraries required in this function ##
 # suppressPackageStartupMessages( library(qlcMatrix) )
@@ -104,7 +104,7 @@
 #' 
 #' # Use a Clone_map object to  plot cloneMap reproducably #
 #' 
-#' Clone_map <- cloneMaps( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+#' Clone_map <- Clone_map( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
 #' Clone_map( Clone_map = Clone_map )
 #' 
 #' 
@@ -130,17 +130,17 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   ## check we have some input ##
   
   clone_map_data_supplied <- !all( is.na(Clone_map) )
-  CFF_data_supplied <- !all( is.na(CCF.data) )
+  CCF_data_supplied <- !all( is.na(CCF.data) )
   tree_data_supplied <- !all( is.na(tree.mat) )
   
-  if( !clone_map_data_supplied & !CFF_data_supplied & !CFF_data_supplied ) stop( "Please provide either a phylogenetics tree matric and a CCF table or a Clone_map object")
+  if( !clone_map_data_supplied & !CCF_data_supplied & !tree_data_supplied ) stop( "Please provide either a phylogenetics tree matric and a CCF table or a Clone_map object")
   
   # if tree supplied in raster input then extract from here #
   if( clone_map_data_supplied ){
     
     # check class is correct (ie is it expected output from this function) #
     if( ! class(Clone_map) == "Clone map" ) stop( "incorrect raster input" )
-    tree.mat <- Clone_map[[2]]
+    tree.mat <- Clone_map$tree
     
   }
   
@@ -158,11 +158,20 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     clones <- unique( as.numeric(c(tree.mat[,1], tree.mat[,2]) ) )
     
     #subset for clones also in CCF table
-    if( CFF_data_supplied ) clones <- clones[ clones %in% CCF.data$clones ]
+    if( CCF_data_supplied ) clones <- clones[ clones %in% CCF.data$clones ]
+
+    if( length(clones) > 8 ){ 
+      
+      # supress warning - gets max number of colours from pallette - none have > 12 #
+      getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
+      clone.cols <- getPalette( length( clones ) )
+      
+    } else {
+      
+      clone.cols <- RColorBrewer::brewer.pal(n = length(clones), name = brewer.palette)
+      
+    }
     
-    # supress warning - gets max number of colours from pallette - none have > 12 #
-    getPalette <- suppressWarnings( colorRampPalette( RColourBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
-    clone.cols <- getPalette( length( clones ) )
     names(clone.cols) <- clones
     
   }
@@ -190,13 +199,13 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     
     # limit tree to clones in the CCF.table #
     # if this is the case print those which have been removed #
-    if( !all( CCF.data$clones %in% tree.clones ) ){ 
+    if( !all( tree.clones %in% CCF.data$clones ) ){ 
       cat( paste0("        ", "clone(s) ", paste0(setdiff(tree.clones, CCF.data$clones), collapse = " "), " found in phylogenetic tree but not in CCF table. These have been removed\n" ) )
-      tree.mat <- remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones ) 
+      tree.mat <- amfFunctions::remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones ) 
     }
     
     # if tree has > one relationship, order the tree from Trunk -> branches -> leaves #
-    if( nrow(tree.mat) > 1) tree.mat <- logically.order.tree( tree.mat ) ## Function specified below and in FrankellA_functions.R script
+    if( nrow(tree.mat) > 1) tree.mat <- amfFunctions::logically.order.tree( tree.mat ) 
     
     ### specify which clone is the root ###
     # as tree as has beeen ordered this been be the parent (ie column 1) in the first relationship #
@@ -209,7 +218,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     # If this occurs a warning will be outputted with how much smaller the parent CCF is than its childern #
     # given noise in CCF caluculations mean we can accept some underestimate of parent CCF but if children # 
     # > 130% of parent this should be checked and tree/clones/CCFs may be incorrect                        #
-    CCF.data <- amfFunction::make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
+    CCF.data <- amfFunctions::make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
     
     
     ######===============================================================######
@@ -251,7 +260,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     CCF.data[CCF.data$clones == root, "area"] <- clonal.area
     
     # now determine cut off in distance matrix which results in desired amount of area for th clonal cluster #
-    possible_cutoffs <- seq( 0.1, mround( max( dist.mat ), 0.1), 0.1)
+    possible_cutoffs <- seq( 0.1, amfFunctions::mround( max( dist.mat ), 0.1), 0.1)
     distance_cutoff <- min( possible_cutoffs[ sapply(possible_cutoffs, function(cut) sum(dist.mat<cut)) >= clonal.area ] )
     
     #save the blank version of the raster matrix #
@@ -282,7 +291,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       rasterPlot <- raster::raster( clones_rasterised_plot )
       
       # set up plot extent #
-      plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
+      raster::plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
       
       ## plot the clonal clone ##
       plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == root}, dissolve = TRUE) )
@@ -291,10 +300,10 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       # note: smoothing will make the plotted area slightly underestmiate the true area but by only very little #
       # also has the advantage that you can see parent clones below at smooth edges and it becomes easier too   #
       # see tree relatinoships                                                                                  #
-      plot.smooth <- smooth(plot, method = "ksmooth", smoothness= smoothing.par)
+      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par)
       
       # specify border thickness & colour in arguments - default is 1.5 & grey #
-      plot( plot.smooth, col = clone.cols[ names( clone.cols ) == root ], border = border.colour, lwd = border.thickness, add = TRUE ) 
+      raster::plot( plot.smooth, col = clone.cols[ names( clone.cols ) == root ], border = border.colour, lwd = border.thickness, add = TRUE ) 
       
     }
     
@@ -491,7 +500,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
         growth.rate <-  resolution.index / rate.modifier
         
         # caluclate max grow for biggest clone #
-        max_growth <- amfFunction::mceiling( max(clone.areas), growth.rate)
+        max_growth <- amfFunctions::mceiling( max(clone.areas), growth.rate)
 
         #don't strt grow from 0 to save time - grow in one step until the point you might encourter other clones #
         # if only one daughter clone then you don't need to grow them at all - go straight to max size #
@@ -551,7 +560,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           avialible.space <- sapply( 1:length( daughters ), function(i) max( avialible.space[[i]] ))
           distance_cutoffs <- sapply( 1:length(daughters), function(i){
             
-            rounded.area <- mround( avialible.space[[i]], 0.1 ) ## mround function specified below
+            rounded.area <- amfFunctions::mround( avialible.space[[i]], 0.1 ) 
             cut.options <- seq( resolution.index / 100 , rounded.area, resolution.index / 100 )
             clone_areas_for_cut_offs <- sapply(cut.options, function(cut) sum( nuclei.dists[[i]] < cut & is_parent_not_sister[[i]] ))
             less_then_target_area <- clone_areas_for_cut_offs <= areas[ names(areas) == daughters[i] ]
@@ -641,8 +650,8 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           rasterPlot <- raster::raster( clones_rasterised_plot )
           
           plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){ x == clone }, dissolve = TRUE) )
-          plot.smooth <- smooth(plot, method = "ksmooth", smoothness = smoothing.par) # smoothing par specified in arguemnts
-          plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = "grey20", lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
+          plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness = smoothing.par) # smoothing par specified in arguemnts
+          raster::plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = "grey20", lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
           
         }
         
@@ -653,7 +662,9 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     # if specified in arguments output the raster matrix of clone positions #
     # this enables yu to repeatedly make the exact same plot or otherwise the clone positions will change each time #
     
-    if( output.rastered.data == TRUE ){
+    if( output.Clone.map.obj == TRUE ){
+      
+      clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
       
       clones_rasterised <- list( clone_matrix = clones_rasterised_plot, tree = tree.mat )
       class(clones_rasterised) <- "Clone map"
@@ -671,7 +682,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     ######===================================================================================######
     
     #  first object in Clone_map is the rsater matrix #
-    clones_rasterised_plot <- Clone_map[[1]]
+    clones_rasterised <- Clone_map$clone_matrix
     
     # already extracted tree from raster data object #
     
@@ -682,11 +693,11 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     # simulate what occurs when plotting & raster generated concurrently #
     # for each clone in the tree (trunk -> leaves) plots the area this occupies indluing all its daughters #
     
-    clones_rasterised_plot <- clones_rasterised_plot
-    clones_rasterised_plot[] <- 0 
-    clones_rasterised_plot <- apply( clones_rasterised_plot, 1, as.numeric )
-    blank.plot <- raster::rasterToPolygons( raster::raster( clones_rasterised_plot ) )
-    plot( blank.plot, col = NA, border = NA ) # set up plot extent
+    clones_rasterised_blank <- clones_rasterised
+    clones_rasterised_blank[] <- 0 
+    clones_rasterised_blank <- apply( clones_rasterised_blank, 1, as.numeric )
+    blank.plot <- raster::rasterToPolygons( raster::raster( clones_rasterised_blank ) )
+    raster::plot( blank.plot, col = NA, border = NA ) # set up plot extent
     
     # signpost #
     cat( paste0( "\n        ", "plotting clones...\n" ) )
@@ -714,17 +725,17 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       
       # make a new raster object where all the daughters are == parent clone #
       
-      clones_rasterised_plot <- clones_rasterised_plot
+      clones_rasterised_plot <- clones_rasterised
       clones_rasterised_plot[ clones_rasterised_plot %in% clone.daughters ] <- clone
-      clones_rasterised_plot <- apply(clones_rasterised_plot,1,as.numeric)
+      clones_rasterised_plot <- apply(clones_rasterised_plot, 1, as.numeric)
       
       # convert to class raster #
       rasterPlot <- raster::raster(clones_rasterised_plot)
       
       # plot the clone #
-      plot <- sf::st_as_sf( raster::rrasterToPolygons(  rasterPlot, function(x){x == clone}, dissolve = TRUE))
-      plot.smooth <- smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par speicified in arguemnts
-      plot(plot.smooth, col = clone.cols[names(clone.cols)==clone], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguemnts and col can be specified in arguments
+      plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == clone}, dissolve = TRUE))
+      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par speicified in arguemnts
+      raster::plot(plot.smooth, col = clone.cols[ names(clone.cols) == clone ], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguemnts and col can be specified in arguments
       
     }
     
@@ -825,7 +836,7 @@ make.distance.matrix <- function( matrix.outline = clones_rasterised, nucleus = 
     dist.mat <- do.call( cbind, lapply( 1:ncol( matrix.outline ), function( col ){
       
       out <- cbind( dist.mat.h[, col ], dist.mat.v[, col ])
-      return( as.numeric( rowMax( out ) ) )
+      return( as.numeric( qlcMatrix::rowMax( out ) ) )
       
     }))
     

@@ -1,14 +1,14 @@
 Package: cloneMap
-Title: What the Package Does (One Line, Title Case)
+Title: Construct representations of somatic clone spatail distributions in a tissue / sample   
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+    person(given = "Alexander",
+           family = "Frankell",
+           role = "cre",
+           email = "alexander.frankell@crick.ac.uk",
+           comment = c(ORCID = "0000-0002-0341-7878"))
+Description: Function to represent somatic clones present in a tissue accounting for clone size, ie the Cancer Cell Fraction (CCF), and for phylogenetic relationships between clones in a semi-randomised manner
+License: s
 Encoding: UTF-8
 LazyData: true
 Imports:
@@ -17,7 +17,7 @@ Imports:
 	smoothr,
 	raster,
 	RColorBrewer,
-	parallel,
+	parallel (>= 3.6.2),
 	amfFunctions
 Remotes: 
 	amf71/amfFunctions

@@ -7,7 +7,7 @@ CCFs_simple_example <- data.frame( clones = c(1, 2, 4, 5),
                                    CCF = c(1, 0.4, 0.02, 0.2) , stringsAsFactors = F)
 
 # tree matricies are written with each relaationship as a row, #
-# the parent as the first column and child as th second        #
+# the parent as the first column and child as the second      #
 
 tree_example <- matrix( c(1, 2,
                           1, 3,
@@ -22,7 +22,7 @@ tree_example <- matrix( c(1, 2,
 
 
 clones <- unique( as.numeric(c(tree_example[,1], tree_example[,2]) ) )
-getPalette <- colorRampPalette( brewer.pal( 8, "Dark2") )
+getPalette <- colorRampPalette( RColorBrewer::brewer.pal( 8, "Dark2") )
 clone_colours_example <- getPalette( length( clones ) )
 
 # OR #
@@ -35,6 +35,7 @@ names(clone_colours_example) <- CCFs_example$clones
 
 
 usethis::use_data( CCFs_example, overwrite = TRUE )
+usethis::use_data( CCFs_simple_example, overwrite = TRUE )
 usethis::use_data( tree_example, overwrite = TRUE )
 usethis::use_data( clone_colours_example, overwrite = TRUE)
 
