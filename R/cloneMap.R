@@ -28,12 +28,15 @@
 #' `output.Clone.map.obj` as TRUE. This contains data specifying tree structure
 #' and the positions of clones. When inputting a tree and a CCF table, clone 
 #' positions are semi-randomly generated but when inputting a `clone_map` postions
-#' will be the identical each time as the postions are recorded in the input.
+#' will be the identical each time as the postions are recorded in the input and 
+#' once the `clone_map` has been generated the plotting is far quicker. 
+#' 
 #' 
 #' @param output.Clone.map.obj If TRUE output a clone_map object containing
 #' informtion on the positions of clones. This object can be saved and repeatly 
 #' provided back to the `clone_map` argument of this function to reproduce precisely 
-#' the same plot.
+#' the same plot and once the `clone_map` has been generated the plotting is far 
+#' quicker. 
 #' 
 #' @param plot.data Plot the cloneMap visualisation now. This may not be desirable if
 #' `output.Clone.map.obj` is set to TRUE. 
