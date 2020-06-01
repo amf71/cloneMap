@@ -145,8 +145,6 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   # make sure tree class is correct #
   tree.mat <- as.matrix( tree.mat )
   
-  # make sure the tree makes sense
-  
   # get colours for plotting if these are not provided #
   clone_colours_supplied <- !all( is.na(clone.cols) )
   
