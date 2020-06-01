@@ -9,7 +9,7 @@ A function to map the distribution of somatic clones in sample or set of samples
 
 ## Installation
 
-You can use devtools::install_github() to install dndscv from this repository:
+You can use devtools::install_github() to install cloneMap from this repository:
 
 `devtools::install_github("amf71/cloneMap")`
 
