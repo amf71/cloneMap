@@ -92,16 +92,19 @@
 #' # example objects provided in env after loading package #
 #' 
 #' cloneMap( tree_example, CCFs_example )
+#' cloneMap( tree_example, CCFs_simple_example ) 
+#'
 #' 
 #' # Use a clone_map object to  plot cloneMap reproducably #
 #' 
-#'clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+#' clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
 #' cloneMap( clone_map = clone_map_eg )
 #' 
 #' 
 #' # specify colours #
+#' # plot two samples from the same tumour so the clone colours match #
 #' 
-#' load( clone_colours_example )
+#' cloneMap( tree_example, CCFs_simple_example, clone.cols = clone_colours_example )
 #' cloneMap( tree_example, CCFs_example, clone.cols = clone_colours_example )
 #' 
 #' @export
@@ -128,7 +131,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   CCF_data_supplied <- !all( is.na(CCF.data) )
   tree_data_supplied <- !all( is.na(tree.mat) )
   
-  if( !clone_map_data_supplied & !CCF_data_supplied & !tree_data_supplied ) stop( "Please provide either a phylogenetics tree matric and a CCF table or a Clone_map object")
+  if( !clone_map_data_supplied & !CCF_data_supplied & !tree_data_supplied ) stop( "Please provide either a phylogenetic tree matrix and a CCF table or a clone_map object")
   
   # if tree supplied in raster input then extract from here #
   if( clone_map_data_supplied ){
@@ -185,7 +188,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     CCF.data <- as.data.frame( CCF.data )
     
     # check that names are correct #
-    correct.names <- names(CCF.data) == c("clones", "CCF")
+    correct.names <- all( names(CCF.data) == c("clones", "CCF") )
     if( correct.names == FALSE ) stop( "ensure that column names of CCF table are `clones` and `CCF`" )
     
     # remove any clones with estimated CCF of 0 in all regions #
@@ -672,6 +675,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
     # if specified in arguments output the raster matrix of clone positions #
     # this enables yu to repeatedly make the exact same plot or otherwise the clone positions will change each time #
+    # also once you've made the raster the plotting alone is much faster #
     
     if( output.Clone.map.obj == TRUE ){
       
@@ -679,6 +683,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       clones_rasterised <- list( clone_matrix = clones_rasterised_plot, tree = tree.mat )
       class(clones_rasterised) <- "Clone map"
+      
       return( clones_rasterised )
       
     }
@@ -759,12 +764,12 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
 }
 
 
-## function to generate a distnce martix, specifiying how far away each piont in the raster matric   ##
-## is from a central nucleus. So far managed two ways to calculaate this, one that specifiesdistance ##
-## purely in two directions ( up and down ) hence casues a square-ish growth pattern and one that    ##
-## accounts for a smaller than 2 distaance for diagonal movement which creates an octagonal pattern  ##
-## the latter is the default for now, ideally probably like to create a circular pattern but not     ##
-## sure how too do this                                                                              ##  
+## function to generate a distnce martix, specifiying how far away each piont in the raster matrix    ##
+## is from a central nucleus. So far managed two ways to calculaate this, one that specifies distance ##
+## purely in two directions ( up and down ) hence casues a square-ish growth pattern and one that     ##
+## accounts for a smaller than 2 distance for diagonal movement which creates an octagonal pattern    ##
+## the latter is the default for now, ideally probably like to create a circular pattern but not      ##
+## sure how to do this                                                                                ##  
 
 make.distance.matrix <- function( matrix.outline = clones_rasterised, nucleus = nucleus, type = "octoagon" ){
   

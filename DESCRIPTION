@@ -17,7 +17,7 @@ Imports:
 	smoothr,
 	raster,
 	RColorBrewer,
-	parallel (>= 3.6.2),
+	parallel,
 	amfFunctions
 Remotes: 
 	amf71/amfFunctions
