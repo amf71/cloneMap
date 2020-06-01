@@ -26,12 +26,12 @@ More complex map:
 
 `cloneMap( tree_example, CCFs_example )`
 
-Use a clone_map object to  plot cloneMaps reproducably 
+Use a clone_map object to  plot cloneMaps reproducably and much faster
  
 `clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
-cloneMap( clone_map = clone_map_eg )`
+ cloneMap( clone_map = clone_map_eg )`
 
 specify the same clone colours accross several plots
  
 `cloneMap( tree_example, CCFs_example, clone.cols = clone_colours_example )
-cloneMap( tree_example, CCFs_simple_example, clone.cols = clone_colours_example )`
+ cloneMap( tree_example, CCFs_simple_example, clone.cols = clone_colours_example )`
