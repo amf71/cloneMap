@@ -1,26 +1,14 @@
-#####
 
-# ## testing
-# tumour <- names(tumours_clones)[100]
-# tree.mat <- trees[[ which(names(trees) == tumour) ]]
-# CCF.data <- CCF.tables[[ which(names(CCF.tables) == tumour) ]][, .(clones = cluster, CCF = meanCCF)]
-# 
-# clone_map = NA; resolution.index = 100;
-# brewer.palette = "Paired"; smoothing.par = 10; clone.cols = NA;
-# output.Clone.map.obj = FALSE; plot.data = TRUE; border.thickness = 1.5;
-# border.colour = "grey20"; repeat.limit = 4; track = TRUE; high_qualty_mode = TRUE
-# ## load libraries required in this function ##
-# suppressPackageStartupMessages( library(qlcMatrix) )
-# suppressPackageStartupMessages( library(sf) )
-# suppressPackageStartupMessages( library(smoothr) )
-# suppressPackageStartupMessages( library(raster) )
-# suppressPackageStartupMessages( library(RColorBrewer) )
-# suppressPackageStartupMessages( library(parallel) )
-
-
+#==================================================================#
 # Function to produce plots showing clonal composotion of a tissue #
 # requires phylogenetic tree data for each clone and the Cancer    #
 # Cell Fraction (CCF) of each clone                                #
+#==================================================================#
+
+#####################
+### Main Function ###
+#####################
+
 
 #' Construct clone maps
 #'
@@ -864,6 +852,11 @@ make.distance.matrix <- function( matrix.outline = clones_rasterised, nucleus = 
   #########
   
 }
+
+
+##########################################
+### supprting functions (not exported) ###
+##########################################
 
 # function to extract (x = row, y = col) coordinates from TRUE in boolean matrix #
 
