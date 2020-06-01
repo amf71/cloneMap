@@ -5,7 +5,7 @@
 # tree.mat <- trees[[ which(names(trees) == tumour) ]]
 # CCF.data <- CCF.tables[[ which(names(CCF.tables) == tumour) ]][, .(clones = cluster, CCF = meanCCF)]
 # 
-# Clone_map = NA; resolution.index = 100;
+# clone_map = NA; resolution.index = 100;
 # brewer.palette = "Paired"; smoothing.par = 10; clone.cols = NA;
 # output.Clone.map.obj = FALSE; plot.data = TRUE; border.thickness = 1.5;
 # border.colour = "grey20"; repeat.limit = 4; track = TRUE; high_qualty_mode = TRUE
@@ -35,16 +35,16 @@
 #' @param CCF.data A table indicating CCFs for each clone in the tree (column
 #'  names are "clones" and "CCF", see example data).
 #' 
-#' @param Clone_map Instead of providing a tree and CCF table you may provide
-#' a `Clone_map` object which has previously been outputted by setting 
+#' @param clone_map Instead of providing a tree and CCF table you may provide
+#' a `clone_map` object which has previously been outputted by setting 
 #' `output.Clone.map.obj` as TRUE. This contains data specifying tree structure
 #' and the positions of clones. When inputting a tree and a CCF table, clone 
-#' positions are semi-randomly generated but when inputting a `Clone_map` postions
+#' positions are semi-randomly generated but when inputting a `clone_map` postions
 #' will be the identical each time as the postions are recorded in the input.
 #' 
-#' @param output.Clone.map.obj If TRUE output a Clone_map object containing
+#' @param output.Clone.map.obj If TRUE output a clone_map object containing
 #' informtion on the positions of clones. This object can be saved and repeatly 
-#' provided back to the `Clone_map` argument of this function to reproduce precisely 
+#' provided back to the `clone_map` argument of this function to reproduce precisely 
 #' the same plot.
 #' 
 #' @param plot.data Plot the cloneMap visualisation now. This may not be desirable if
@@ -89,9 +89,9 @@
 #'  
 #' 
 #' 
-#' @return A `Clone_map` object will be returned if `output.Clone.map.obj` is TRUE
+#' @return A `clone_map` object will be returned if `output.Clone.map.obj` is TRUE
 #' containing information on clonal positions and tree structure. This output can 
-#' be inputted using the `Clone_map` argument to repeat the same plot many times.
+#' be inputted using the `clone_map` argument to repeat the same plot many times.
 #' 
 #' @author 
 #' 
@@ -100,21 +100,21 @@
 #' @examples 
 #' # example objects provided in env after loading package #
 #' 
-#' Clone_map( tree_example, CCFs_example )
+#' cloneMap( tree_example, CCFs_example )
 #' 
-#' # Use a Clone_map object to  plot cloneMap reproducably #
+#' # Use a clone_map object to  plot cloneMap reproducably #
 #' 
-#' Clone_map <- Clone_map( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
-#' Clone_map( Clone_map = Clone_map )
+#'clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+#' cloneMap( clone_map = clone_map_eg )
 #' 
 #' 
 #' # specify colours #
 #' 
 #' load( clone_colours_example )
-#' cloneMaps( tree_example, CCFs_example, clone.cols = clone_colours_example )
+#' cloneMap( tree_example, CCFs_example, clone.cols = clone_colours_example )
 #' 
 #' @export
-Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clone.map.obj = FALSE,
+cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
                        plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
                        resolution.index = 100,  smoothing.par = 10, repeat.limit = 4 ){
@@ -133,7 +133,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   
   ## check we have some input ##
   
-  clone_map_data_supplied <- !all( is.na(Clone_map) )
+  clone_map_data_supplied <- !all( is.na(clone_map) )
   CCF_data_supplied <- !all( is.na(CCF.data) )
   tree_data_supplied <- !all( is.na(tree.mat) )
   
@@ -143,8 +143,8 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
   if( clone_map_data_supplied ){
     
     # check class is correct (ie is it expected output from this function) #
-    if( ! class(Clone_map) == "Clone map" ) stop( "incorrect raster input" )
-    tree.mat <- Clone_map$tree
+    if( ! class(clone_map) == "Clone map" ) stop( "incorrect raster input" )
+    tree.mat <- clone_map$tree
     
   }
   
@@ -696,7 +696,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
     ######===================================================================================######
     
     #  first object in Clone_map is the rsater matrix #
-    clones_rasterised <- Clone_map$clone_matrix
+    clones_rasterised <- clone_map$clone_matrix
     
     # already extracted tree from raster data object #
     
