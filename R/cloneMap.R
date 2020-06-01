@@ -142,6 +142,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   # make sure tree class is correct #
   tree.mat <- as.matrix( tree.mat )
   
+  # make sure the tree makes sense
+  
   # get colours for plotting if these are not provided #
   clone_colours_supplied <- !all( is.na(clone.cols) )
   
@@ -181,6 +183,10 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
     # ensure CCF.table is correct class #
     CCF.data <- as.data.frame( CCF.data )
+    
+    # check that names are correct #
+    correct.names <- names(CCF.data) == c("clones", "CCF")
+    if( correct.names == FALSE ) stop( "ensure that column names of CCF table are `clones` and `CCF`" )
     
     # remove any clones with estimated CCF of 0 in all regions #
     CCF.data <- CCF.data[ CCF.data$CCF > 0 ,]
