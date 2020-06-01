@@ -11,7 +11,7 @@ Clone_map(
   output.Clone.map.obj = FALSE,
   plot.data = TRUE,
   high_qualty_mode = FALSE,
-  track = FALSE,
+  track = NA,
   brewer.palette = "Paired",
   clone.cols = NA,
   border.colour = "grey20",
@@ -47,10 +47,10 @@ the same plot.}
 \item{high_qualty_mode}{This activates several mechanisms to ensure high quality plots
 at the expense of longer running times, particularly so for some input data. These
 mechanisms attempt to aviod plots where the same clone seperates into several islands,
-and hence is noot continuous with itself, as well as interweaving of clones.}
+and hence is not continuous with itself, as well as interweaving of clones. If TRUE Track
+will also be TRUE unless Track is explicited set to FALSE.}
 
-\item{track}{Provide extra feedback on progress of function. Useful when high_qualty_mode
-is TRUE.}
+\item{track}{Provide extra feedback on progress of function. Default is FALSE in normal mode but TRUE in high quialty mode.}
 
 \item{brewer.palette}{A qualitative colour pallette from the `RColourBrewer` package to use for the
 clones.}
@@ -98,7 +98,7 @@ Clone_map( tree_example, CCFs_example )
 
 # Use a Clone_map object to  plot cloneMap reproducably #
 
-Clone_map <- cloneMaps( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+Clone_map <- Clone_map( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
 Clone_map( Clone_map = Clone_map )
 
 

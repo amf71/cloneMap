@@ -53,10 +53,10 @@
 #' @param high_qualty_mode This activates several mechanisms to ensure high quality plots
 #' at the expense of longer running times, particularly so for some input data. These
 #' mechanisms attempt to aviod plots where the same clone seperates into several islands,
-#' and hence is noot continuous with itself, as well as interweaving of clones. 
+#' and hence is not continuous with itself, as well as interweaving of clones. If TRUE Track
+#' will also be TRUE unless Track is explicited set to FALSE.
 #' 
-#' @param track Provide extra feedback on progress of function. Useful when high_qualty_mode
-#' is TRUE. 
+#' @param track Provide extra feedback on progress of function. Default is FALSE in normal mode but TRUE in high quialty mode. 
 #' 
 #' @param brewer.palette A qualitative colour pallette from the `RColourBrewer` package to use for the
 #' clones.  
@@ -115,9 +115,13 @@
 #' 
 #' @export
 Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clone.map.obj = FALSE,
-                       plot.data = TRUE, high_qualty_mode = FALSE, track = FALSE, brewer.palette = "Paired",
+                       plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
                        resolution.index = 100,  smoothing.par = 10, repeat.limit = 4 ){
+  
+  # work out whther to track function in detail #
+  if( high_qualty_mode & is.na( track )) track <- TRUE
+  if( !high_qualty_mode & is.na( track )) track <- FALSE
   
   # how many core do you have access to for parrelellisation? #
   num_cores <- parallel::detectCores() / 2
@@ -340,6 +344,8 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       # if only got the clonal cluster don't need to continue - already recorded and plotted the clonal cluster #
       if( all(tree.mat == root) ) break
       
+      # if( as.numeric(parent) == 5 ) browser() # TESTING
+      
       # extract daughters of this clone and how many there are #
       # daughters are always col 2 of tree #
       daughters <- tree.mat[ tree.mat[,1] == parent, 2]
@@ -368,6 +374,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
       
       repeat{
         
+        clones.finalised <- FALSE
         repeati <- repeati + 1
         clones_rasterised <- clones_rasterised_parent
         
@@ -450,7 +457,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
             
           } else {
             
-            max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists ))
+            max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))
             nuclei <- nucleus.options.sel[[ max_dist_i ]]
             nuclei_min_distance <-  nucleus.options.min.dists[[ max_dist_i ]]
             
@@ -462,7 +469,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
         } else {
           
           # if only one daughter clone just place very near the centre (0.3 * distance to edge) of the parent #
-          nucleus.options <- which( parent.dist.mat < (parent_distance_cutoff * 0.5) & clones_rasterised_parent == parent )
+          nucleus.options <- which( parent.dist.mat < (parent_distance_cutoff * 0.3) & clones_rasterised_parent == parent )
           nucleus.options <- nucleus.options[ sample( 1:length( nucleus.options ), 1 ) ]
           nuclei <- matrix.index.to.coordinates( nucleus.options, nrow = nrow( clones_rasterised ), ncol = ncol( clones_rasterised ) )
           nuclei <- lapply(1:nrow(nuclei), function(x) as.numeric(nuclei[x,]))
@@ -482,6 +489,7 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
         # if nucleus outside parent then will have been set to Inf therefore the matrix will lack a 0 #
         bad_nucleus <- sapply( sapply( 1:length(daughters), function(i) which( nuclei.dists[[i]] == 0 )), length) == 0
         if( any( bad_nucleus ) ){
+          # browser() # TESTING
           stop( paste( "(BUG) chosen nucleus outside of parent for clone", daughters[ bad_nucleus ]) )
         }
         
@@ -582,25 +590,6 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           
         }
         
-        # recenter the clones depending on how they've grown  #
-        nuclei.dists <- lapply( 1:length(daughters), function(i) recenter_distance_matrix( clone_position = clones_rasterised == daughters[i] ) )  # recenter_distance_matrix function below
-        names(nuclei.dists) <- daughters
-        # extract new cut offs - just use the max distance away from nucleus where each clone is #
-        distance_cutoffs <- sapply( 1:length(daughters), function(i) max( nuclei.dists[[i]][ clones_rasterised == daughters[i] ] ) )
-        names(distance_cutoffs) <- daughters
-        
-        ## for each of these clones record thier distrebution and distance cut offs ##
-        ## so we can extract this information later if they are parents   ##
-        
-        for(clone in daughters){
-          
-          parent.dists <- c( parent.dists, list( nuclei.dists[[ which( names( nuclei.dists ) == clone ) ]] ) )
-          names(parent.dists) <- c( names(parent.dists)[ 1:( length(parent.dists) -  1 ) ], clone )
-          parent_distance_cutoffs <- c( parent_distance_cutoffs, distance_cutoffs[[ which( names( distance_cutoffs ) == clone ) ]] )
-          names(parent_distance_cutoffs) <- c( names( parent_distance_cutoffs )[ 1:( length(parent_distance_cutoffs ) - 1 ) ], clone)
-          
-        }
-        
         # test that all clones we are trying to plot are present in raster #
         clones.present <- sapply( daughters, function( clone ) any( clones_rasterised == clone ) )
         if( any( !clones.present ) ){
@@ -618,15 +607,40 @@ Clone_map <- function( tree.mat = NA, CCF.data = NA, Clone_map = NA, output.Clon
           are_continuous <- sapply( daughters, function(clone) continuous.test( clone_position = clones_rasterised == clone ) ) ## continuous.test function specified below
           if( all( are_continuous ) ){
             
-            break
+            clones.finalised <- TRUE
             
-          } else  if( track ) cat( paste0( "        ", "clone(s) ", paste(names( are_continuous )[ are_continuous ], collapse = " "), " not continuous so repeat...\n" ) )
+          } else  if( track ) cat( paste0( "        ", "clone(s) ", paste( daughters[ !are_continuous ], collapse = " "), " not continuous so repeat...\n" ) )
           
           
-        } else break
+        } else  clones.finalised <- TRUE
         
         # only allow certain number of repeats and then give up (default = 10) #
-        if( repeati == repeat.limit ){ cat( paste0( "reached repeat limit to achieve continuous daughter clones (", paste(names( are_continuous )[ are_continuous ], collapse = " "), ") in parent clone ", parent, "\n" ) ) ; break }
+        if( repeati == repeat.limit ){ cat( paste0( "reached repeat limit to achieve continuous daughter clones (", paste(names( are_continuous )[ !are_continuous ], collapse = " "), ") in parent clone ", parent, "\n" ) ) ; clones.finalised <- TRUE }
+        
+        if( clones.finalised ==  TRUE ){
+        
+        # recenter the clones depending on how they've grown  #
+        nuclei.dists <- lapply( 1:length(daughters), function(i) recenter_distance_matrix( clone_position = clones_rasterised == daughters[i] ) )  # recenter_distance_matrix function below
+        names(nuclei.dists) <- daughters
+        # extract new cut offs - just use the max distance away from nucleus where each clone is #
+        distance_cutoffs <- sapply( 1:length(daughters), function(i) max( nuclei.dists[[i]][ clones_rasterised == daughters[i] ] ) )
+        names(distance_cutoffs) <- daughters
+        
+        ## Once we have the finial distributiions, for each of these clones record thier distrebution ##
+        ## and distance cut offsso we can extract this information later if they are parents       ##
+        
+        for(clone in daughters){
+          
+          parent.dists <- c( parent.dists, list( nuclei.dists[[ which( names( nuclei.dists ) == clone ) ]] ) )
+          names(parent.dists) <- c( names(parent.dists)[ 1:( length(parent.dists) -  1 ) ], clone )
+          parent_distance_cutoffs <- c( parent_distance_cutoffs, distance_cutoffs[[ which( names( distance_cutoffs ) == clone ) ]] )
+          names(parent_distance_cutoffs) <- c( names( parent_distance_cutoffs )[ 1:( length(parent_distance_cutoffs ) - 1 ) ], clone)
+          
+        }
+        
+        break
+        
+        }
         
       }
       
