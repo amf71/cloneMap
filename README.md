@@ -86,7 +86,7 @@ names(clone_colours_example) <- clone.names
 Simple map:
 
 ```R
-cloneMap( tree_example, CCFs_simple_example )
+cloneMap( tree_example_1, CCFs_example_1 )
 ```
 
 ![example1](data-raw/example_outputs/example_1.png)
@@ -94,7 +94,7 @@ cloneMap( tree_example, CCFs_simple_example )
 More complex map:
 
 ```R
-cloneMap( tree_example, CCFs_example )
+cloneMap( tree_example_2, CCFs_example_2 )
 ```
 
 ![example2](data-raw/example_outputs/example_2.png)
@@ -103,7 +103,7 @@ cloneMap( tree_example, CCFs_example )
 Use a clone_map object to  plot cloneMaps reproducably and much faster:
  
 ```R
-clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+clone_map_eg <- cloneMap( tree_example_2, CCFs_example_2, output.Clone.map.obj = TRUE, plot.data = FALSE )
 cloneMap( clone_map = clone_map_eg )
 ```
 
@@ -113,8 +113,8 @@ cloneMap( clone_map = clone_map_eg )
 Specify the same clone colours accross several plots:
  
 ```R
-cloneMap( tree_example, CCFs_example, clone.cols = clone_colours_example )
-cloneMap( tree_example, CCFs_simple_example, clone.cols = clone_colours_example )
+cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example )
+cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example )
 ```
 
 ![example4](data-raw/example_outputs/example_4.png)
