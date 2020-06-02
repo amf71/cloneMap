@@ -43,9 +43,8 @@ clone.names <- unique( c( tree_example[,1], tree_example[,2] ) )
 
 
 # can choose colour manually #
-clone_colours_example <- c( "#1B9E77", "#A07125", "#B16548", "#8068AE", "#D03792",
-                            "#A66753", "#7FA718", "#D9AA04", "#BF8B12", "#927132",
-                            "#666666" ) 
+clone_colours_example <- c( "#B15928", "#DDD399", "#9471B4", "#ED8F47", "#FDB762", 
+                            "#E52829", "#B89B74", "#79C360", "#3F8EAA", "#A6CEE3" ) 
 
 # OR #
 
@@ -66,7 +65,9 @@ usethis::use_data( tree_example, overwrite = TRUE )
 usethis::use_data( clone_colours_example, overwrite = TRUE)
 
 
-# install package again to update example data #
+# clear env and install package again to update example data #
+
+rm( ls() )
 
 devtools::install()
 
@@ -79,7 +80,7 @@ library(cloneMap)
 
 # first simple example #
 
-pdf( "data-raw/example_outputs/example_1.pdf")
+png( "data-raw/example_outputs/example_1.png" )
 
 cloneMap( tree_example_1, CCFs_example_1, border.thickness = 3 )
 
@@ -88,7 +89,7 @@ invisible( dev.off() )
 
 # second more complex example #
 
-pdf( "data-raw/example_outputs/example_2.pdf")
+png( "data-raw/example_outputs/example_2.png")
 
 cloneMap( tree_example_2, CCFs_example_2, border.thickness = 3 )
 
@@ -99,7 +100,7 @@ invisible( dev.off() )
 
 clone_map_eg <- cloneMap( tree_example_2, CCFs_example_2, output.Clone.map.obj = TRUE, plot.data = FALSE )
 
-pdf( "data-raw/example_outputs/example_3.pdf")
+png( "data-raw/example_outputs/example_3.png" )
 
 cloneMap( clone_map = clone_map_eg, border.thickness = 3 )
 
@@ -111,7 +112,7 @@ invisible( dev.off() )
 layout <- matrix( c( 1, 2,
                      3, 4 ), ncol = 2, byrow = TRUE )
 
-pdf( "data-raw/example_outputs/example_4.pdf", width = 12 )
+png( "data-raw/example_outputs/example_4.png", width = 800 )
 
 layout( layout,
         heights = c(1, 5),
@@ -120,10 +121,10 @@ layout( layout,
 par( mar = c(1, 1, 1, 1), xpd = NA)
 
 plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-text(0.5, 0.5, labels = "Tumour 1: Sample 1", cex = 4, font = 2)
+text(0.5, 0.5, labels = "Tumour 1: Sample 1", cex = 3, font = 2)
 
 plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-text(0.5, 0.5, labels = "Tumour 1: Sample 2", cex = 4, font = 2)
+text(0.5, 0.5, labels = "Tumour 1: Sample 2", cex = 3, font = 2)
 
 cloneMap( tree_example_1, CCFs_example_1, clone.cols = clone_colours_example, border.thickness = 3 )
 
