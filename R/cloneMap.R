@@ -133,6 +133,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   
   if( !clone_map_data_supplied & !CCF_data_supplied & !tree_data_supplied ) stop( "Please provide either a phylogenetic tree matrix and a CCF table or a clone_map object")
   
+  
   # if tree supplied in raster input then extract from here #
   if( clone_map_data_supplied ){
     
@@ -142,9 +143,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
   }
   
-  # make sure tree class is correct #
+  # make sure tree class is correct and it looks like a tree #
   tree.mat <- as.matrix( tree.mat )
-  
+
   # get colours for plotting if these are not provided #
   clone_colours_supplied <- !all( is.na(clone.cols) )
   
