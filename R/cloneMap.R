@@ -489,7 +489,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         bad_nucleus <- sapply( sapply( 1:length(daughters), function(i) which( nuclei.dists[[i]] == 0 )), length) == 0
         if( any( bad_nucleus ) ){
           # browser() # TESTING
-          stop( paste0( "(BUG) chosen nucleus outside of parent for clone ", daughters[ bad_nucleus ], ". Try rerunning") )
+          stop( paste0( "(BUG) chosen nucleus outside of parent for clone ", daughters[ bad_nucleus ], ". Try rerunning.") )
         }
         
         # grow clones regularly to allow clone to grow evenly relative to one another #
@@ -1006,5 +1006,3 @@ recenter_distance_matrix <- function( clone_position ){
 #===========#
 ###  END  ###
 #===========#
-
-
