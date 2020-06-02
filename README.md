@@ -89,7 +89,7 @@ Simple map:
 cloneMap( tree_example, CCFs_simple_example )
 ```
 
-![example1](data-raw/example_outputs/example_1.pdf)
+![example1](data-raw/example_outputs/example_1.png)
 
 More complex map:
 
@@ -97,7 +97,7 @@ More complex map:
 cloneMap( tree_example, CCFs_example )
 ```
 
-![example2](data-raw/example_outputs/example_2.pdf)
+![example2](data-raw/example_outputs/example_2.png)
 
 
 Use a clone_map object to  plot cloneMaps reproducably and much faster:
@@ -107,7 +107,7 @@ clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRU
 cloneMap( clone_map = clone_map_eg )
 ```
 
-![example3](data-raw/example_outputs/example_3.pdf)
+![example3](data-raw/example_outputs/example_3.png)
 
 
 Specify the same clone colours accross several plots:
@@ -117,5 +117,5 @@ cloneMap( tree_example, CCFs_example, clone.cols = clone_colours_example )
 cloneMap( tree_example, CCFs_simple_example, clone.cols = clone_colours_example )
 ```
 
-![example4](data-raw/example_outputs/example_4.pdf)
+![example4](data-raw/example_outputs/example_4.png)
 
