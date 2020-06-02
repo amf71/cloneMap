@@ -16,6 +16,12 @@ You can use devtools::install_github() to install cloneMap from this repository:
 
 ## Usage examples
 
+load package:
+
+```R
+library(cloneMap)
+```
+
 `tree_example`, `CCFs_simple_example`, `CCFs_example` and `clone_colours_example` are provided upon package loading
 
 
