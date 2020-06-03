@@ -18,6 +18,7 @@ Imports:
 	raster,
 	RColorBrewer,
 	parallel,
+	rgeos,
 	amfFunctions
 Remotes: 
 	amf71/amfFunctions
