@@ -918,6 +918,8 @@ coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
 
 continuous.test <- function( clone_position ){
   
+  browser()
+  
   # how many core do you haave access to for parrelellisation? #
   num_cores <- parallel::detectCores() / 2
   # only worth parrellelising if > 10 cores, otheriwise actually slows code! - need to test further #
