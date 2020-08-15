@@ -924,10 +924,9 @@ continuous.test <- function( clone_position ){
   num_cores <- parallel::detectCores() / 2
   # only worth parrellelising if > 10 cores, otheriwise actually slows code! - need to test further #
   if( num_cores < 10 ) num_cores <- 1
-  
   # get cordinataes of all position for this clone #
   coords <- as.data.table( matrix.index.to.coordinates( which( clone_position ), nrow = nrow( clone_position ), ncol = ncol( clone_position ) ) ) # matrix.index.to.coordinates specified above
-  coords_ids <- paste(coords[, x] , coords[, y], sep = "_" )
+  coords_ids <- paste(coords[, "x"] , coords[, "y"], sep = "_" )
   
   # make as list #
   coords.list <- lapply( 1:nrow( coords ), function(i) coords[ i ,])
