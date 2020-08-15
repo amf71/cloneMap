@@ -236,22 +236,22 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # clone CCF expected in percentages not fractions - if looks like fractions (clonal CCF < 2) then x 100 #
     if( CCF.data[ CCF.data$clones == root, "CCF" ] < 2 ) CCF.data$CCF <- CCF.data$CCF * 100
     
-    ### In cases where CCF all daughters > CCF parent decrese the daughter CCFs proportionoally to match parent ###
-    # If this occurs a warning will be outputted with how much smaller the parent CCF is than its childern #
-    # given noise in CCF caluculations mean we can accept some underestimate of parent CCF but if children # 
+    ### In cases where CCF all daughters > CCF parent decrease the daughter CCFs proportionally to match parent ###
+    # If this occurs a warning will be outputted with how much smaller the parent CCF is than its children #
+    # given noise in CCF calculations mean we can accept some underestimate of parent CCF but if children # 
     # > 130% of parent this should be checked and tree/clones/CCFs may be incorrect                        #
     CCF.data <- amfFunctions::make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
     
     
     ######===============================================================######
     ######                                                               ######
-    ######   Create rasterised data to indicate postions of each clone   ######
+    ######   Create rasterised data to indicate positions of each clone  ######
     ######                                                               ######
     ######===============================================================######
     
     # make matrix that specifies each position using the resolution index (argument) specifying number fo columns and rows #
-    # the higher the specified resultion index the more precise the plots, but the longer this code will take to run #
-    # populate the plot with 0s (indicates no prescence of any clone) #
+    # the higher the specified resolution index the more precise the plots, but the longer this code will take to run #
+    # populate the plot with 0s (indicates no presence of any clone) #
      
     clones_rasterised <- do.call( cbind, lapply( 1:resolution.index, function(i) rep( 0, resolution.index ) ) ) 
     
@@ -260,7 +260,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     ##############################
     
     # clones are present in "patches" within the plot which simulates (v approximately) how clonal growth occurs #
-    # Each clone will nucleate at a partially randomised postion within its parent clone and grow until it reaches its specified CCF #
+    # Each clone will nucleate at a partially randomized postion within its parent clone and grow until it reaches its specified CCF #
     # sisters within the same parent will compete for space and grow around one another until both reach the appropriate CCF #
     # clones grow in this mathematically simple octagon shape unless they hit barrier (parent edge or sister) #
     
