@@ -143,9 +143,27 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
   }
   
+  # check that names are correct #
+  correct.names <- all( names(CCF.data) == c("clones", "CCF") )
+  if( correct.names == FALSE ) stop( "ensure that column names of CCF table are `clones` and `CCF`" )
+  
+  # Need to deal with numeric clone names for the matrix rasterisation #
+  # create a conversion table
+  orig_names <- unique( c(tree.mat[,1],  tree.mat[,2] ) )
+  clone_names <- data.frame( orig = orig_names,
+                             new = 1:length(orig_names))
+  
+  #now convert the clone names in the CCF table and tree
+  CCF.data$clones <- clone_names[ match( CCF.data$clones, clone_names$orig ), "new" ]
+  tree.mat[, 1] <- clone_names[ match( tree.mat[, 1], clone_names$orig ), "new" ]
+  tree.mat[, 2] <- clone_names[ match( tree.mat[, 2], clone_names$orig ), "new" ]
+  
   # make sure tree class is correct and it looks like a tree #
   tree.mat <- as.matrix( tree.mat )
-
+  if( !ncol(tree.mat) == 2 ) stop( 'tree input should be a table with two columns with 
+                                      each row indicating a parent (column 1) and corresponding 
+                                      child (column 2' )
+  
   # get colours for plotting if these are not provided #
   clone_colours_supplied <- !all( is.na(clone.cols) )
   
@@ -191,6 +209,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     if( correct.names == FALSE ) stop( "ensure that column names of CCF table are `clones` and `CCF`" )
     
     # remove any clones with estimated CCF of 0 in all regions #
+    if( any( CCF.data$CCF == 0 ) ) cat( "Some clones in CCF table have 0 CCF. These will not be plotted.")
     CCF.data <- CCF.data[ CCF.data$CCF > 0 ,]
     
     # limit CCF.table to clones on the tree #
@@ -342,8 +361,6 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       # if only got the clonal cluster don't need to continue - already recorded and plotted the clonal cluster #
       if( all(tree.mat == root) ) break
-      
-      # if( as.numeric(parent) == 5 ) browser() # TESTING
       
       # extract daughters of this clone and how many there are #
       # daughters are always col 2 of tree #
@@ -1001,6 +1018,86 @@ recenter_distance_matrix <- function( clone_position ){
   return(new.dist)
   
 }
+
+
+
+
+
+plot_grouped_cloneMaps <- function(tumour_group_data, group_name, rasters.list, byRegion = FALSE, group_order = NA, track = TRUE, no.cols = 20 ){
+  
+  groups <- tumour_clin[ order(get(group_name)), .N, by = get(group_name)]
+  setnames(groups, c("group","N"))
+  
+  if( !all(is.na(group_order)) ) groups <-  groups[ match( group_order, group), ]
+  
+  groups[, rounded_n := mceiling(N, no.cols) ][,
+                                               nrow := rounded_n / no.cols ][,
+                                                                             cummul_rounded_n := sapply( 1:nrow(groups), function(i)  sum(rounded_n[1:i])) ]
+  
+  ## now make the layout for the plot ##
+  
+  layout <- do.call(rbind, lapply( 1:nrow(groups), function(i){
+    
+    if(i == 1) cum_before <- 2 else cum_before <- groups[i-1,cummul_rounded_n]+ 1 + i
+    
+    cum_after <- groups[i,cummul_rounded_n] + i
+    
+    out <- matrix( cum_before:cum_after, nrow = groups[i,nrow], byrow = TRUE)
+    
+    out <- rbind( matrix(rep(cum_before-1, no.cols * 2), nrow = 2), out)
+    
+    return( out )
+    
+  }))
+  
+  ## now assign each tumour a piont in the layout ##
+  
+  positions <- data.table( pos = 1:max(layout),
+                           to_plot = unlist(lapply(groups[,group], function( group ){
+                             out <- group
+                             out <- c(out, tumour_clin[ get(group_name) == group, tumour ])
+                             igroup <- which(groups$group == group)
+                             out <- c(out, rep(NA, groups[igroup, rounded_n] - length(out) + 1))
+                             return(out)
+                           })) )
+  
+  
+  ## now plot all the tumour maps ##
+  
+  
+  #pdf(file = paste0(outputs.folder,"/",date,"_421_tumour_maps_by_Tumour_by_Stage.pdf"), width = 20, height = 30)
+  
+  layout(layout)
+  
+  for( i in 1:nrow(positions) ){
+    
+    is.sample <- grepl( "LTX", positions[i, to_plot] )
+    
+    par( mai = c(0, 0, 0, 0), xpd = NA)
+    
+    if( is.sample == TRUE ){
+      
+      tumour <- positions[i, to_plot]
+      
+      if(track == TRUE) cat( paste0( which(positions[ grepl("LTX",to_plot), to_plot] == tumour ), " " ) )
+      
+      cloneMap::cloneMap( clone_map = rasters.list[[ which( names(trees) == tumour ) ]] )
+      
+    } else {
+      
+      plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+      
+      if( !is.na( positions[i, to_plot] ))  text(x = 0.5, y = 0.5, positions[i, to_plot], cex =8, col = "black")
+      
+    }
+    
+  }
+  
+  #invisible( dev.off() )
+  
+}
+
+
 
 
 #===========#
