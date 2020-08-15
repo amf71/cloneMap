@@ -933,15 +933,15 @@ continuous.test <- function( clone_position ){
   
   
   # get surronuding cords coordinates for each cooord #
-  coords.surrounding.id.list <- parallel::mclapply( coords.list, function(coord) c( coord[, paste( coord$x + 1, coord$y, sep = "_" ) ],
-                                                                          coord[, paste( coord$x - 1, coord$y, sep = "_" ) ],
-                                                                          coord[, paste( coord$x, coord$y + 1, sep = "_" ) ],
-                                                                          coord[, paste( coord$x, coord$y - 1, sep = "_" ) ],
+  coords.surrounding.id.list <- parallel::mclapply( coords.list, function(coord) c( paste( coord$x + 1, coord$y, sep = "_" ),
+                                                                          paste( coord$x - 1, coord$y, sep = "_" ),
+                                                                          paste( coord$x, coord$y + 1, sep = "_" ),
+                                                                          paste( coord$x, coord$y - 1, sep = "_" ),
                                                                           # diagonals # 
-                                                                          coord[, paste( coord$x + 1, coord$y - 1, sep = "_" ) ],
-                                                                          coord[, paste( coord$x + 1, coord$y + 1, sep = "_" ) ],
-                                                                          coord[, paste( coord$x - 1, coord$y - 1, sep = "_" ) ],
-                                                                          coord[, paste( coord$x - 1, coord$y + 1, sep = "_" ) ] ), mc.cores = num_cores )
+                                                                          paste( coord$x + 1, coord$y - 1, sep = "_" ),
+                                                                          paste( coord$x + 1, coord$y + 1, sep = "_" ),
+                                                                          paste( coord$x - 1, coord$y - 1, sep = "_" ),
+                                                                          paste( coord$x - 1, coord$y + 1, sep = "_" ) ), mc.cores = num_cores )
   
   
   # choose a postion in clone at random #
