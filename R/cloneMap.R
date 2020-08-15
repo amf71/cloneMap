@@ -918,7 +918,7 @@ coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
 
 continuous.test <- function( clone_position ){
   
-  broswer()
+  browser()
   
   # how many core do you haave access to for parrelellisation? #
   num_cores <- parallel::detectCores() / 2
