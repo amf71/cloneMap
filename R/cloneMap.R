@@ -141,15 +141,20 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     if( ! class(clone_map) == "Clone map" ) stop( "incorrect raster input" )
     tree.mat <- clone_map$tree
     
-  }
+  } else{
   
   # check that names are correct #
   correct.names <- all( names(CCF.data) == c("clones", "CCF") )
   if( correct.names == FALSE ) stop( "ensure that column names of CCF table are `clones` and `CCF`" )
   
+  # check CCF.data is a table of some sort
+  if( !any( class( CCF.data ) %in% c("matrix", "data.frame") ) ) stop( "please provide CCF data in tabular format as described" )
+  # check CCF.data is got data in
+  if( nrow(CCF.data) == 0 ) stop( "please provide data in CCF.data. No rows detected." )
+  
   # Need to deal with numeric clone names for the matrix rasterisation #
   # create a conversion table
-  orig_names <- unique( c(tree.mat[,1],  tree.mat[,2] ) )
+  orig_names <- unique( c(tree.mat[,1],  tree.mat[,2], CCF.data$clones ) )
   clone_names <- data.frame( orig = orig_names,
                              new = 1:length(orig_names))
   
@@ -164,13 +169,15 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
                                       each row indicating a parent (column 1) and corresponding 
                                       child (column 2' )
   
+  }
+  
   # get colours for plotting if these are not provided #
   clone_colours_supplied <- !all( is.na(clone.cols) )
   
   if( !clone_colours_supplied ){
     
     # order the tree so the trunk and earl clones are always the same colours accross tumours #
-    if( nrow(tree.mat) > 1 ) tree.mat <- amfFunctions::logically.order.tree(tree.mat)
+    if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree(tree.mat)
     
     clones <- unique( as.numeric(c(tree.mat[,1], tree.mat[,2]) ) )
     
@@ -179,8 +186,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
 
     if( length(clones) > 8 ){ 
       
-      # supress warning - gets max number of colours from pallette - none have > 12 #
-      getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in argumentss, default = "Paired"
+      # suppress warning - gets max number of colours from pallette - none have > 12 #
+      getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in arguments, default = "Paired"
       clone.cols <- getPalette( length( clones ) )
       
     } else {
@@ -216,18 +223,18 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # if this is the case print those which have been removed #
     tree.clones <- unique( as.numeric(tree.mat) )
     
-    if( !all( CCF.data$clones %in% tree.clones ) ) cat( paste0("        ", "clone(s) ", paste0(setdiff(CCF.data$clones, tree.clones), collapse = " "), " found in CCF table but not phylogenetic tree. These have been removed\n" ) ) 
+    if( !all( CCF.data$clones %in% tree.clones ) ) cat( paste0("        ", "clone(s) ", paste0(setdiff(CCF.data$clones, tree.clones), collapse = " "), " found in tree but not phylogenetic CCF table. These have been removed\n" ) ) 
     CCF.data <- CCF.data[ CCF.data$clones %in% tree.clones, ]
     
     # limit tree to clones in the CCF.table #
     # if this is the case print those which have been removed #
     if( !all( tree.clones %in% CCF.data$clones ) ){ 
       cat( paste0("        ", "clone(s) ", paste0(setdiff(tree.clones, CCF.data$clones), collapse = " "), " found in phylogenetic tree but not in CCF table. These have been removed\n" ) )
-      tree.mat <- amfFunctions::remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones ) 
+      tree.mat <- remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones ) 
     }
     
     # if tree has > one relationship, order the tree from Trunk -> branches -> leaves #
-    if( nrow(tree.mat) > 1) tree.mat <- amfFunctions::logically.order.tree( tree.mat ) 
+    if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree( tree.mat ) 
     
     ### specify which clone is the root ###
     # as tree as has beeen ordered this been be the parent (ie column 1) in the first relationship #
@@ -240,7 +247,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # If this occurs a warning will be outputted with how much smaller the parent CCF is than its children #
     # given noise in CCF calculations mean we can accept some underestimate of parent CCF but if children # 
     # > 130% of parent this should be checked and tree/clones/CCFs may be incorrect                        #
-    CCF.data <- amfFunctions::make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
+    CCF.data <- make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below and in FrankellA_functions.R script
     
     
     ######===============================================================######
@@ -274,7 +281,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # make clonal area the diameter of the whole plot #
     clonal.area <- sum( dist.mat < resolution.index / 2 )
     
-    ## Calcualate equivilent 'area' each subclone should consume depending on its CCF ##
+    ## Calculate equivalent 'area' each subclone should consume depending on its CCF ##
     # CCF should be supplied as a percentage - converted to a fraction #
     CCF.data$area <- round( (CCF.data$CCF / 100) * clonal.area )
     
@@ -282,7 +289,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     CCF.data[CCF.data$clones == root, "area"] <- clonal.area
     
     # now determine cut off in distance matrix which results in desired amount of area for th clonal cluster #
-    possible_cutoffs <- seq( 0.1, amfFunctions::mround( max( dist.mat ), 0.1), 0.1)
+    possible_cutoffs <- seq( 0.1, mround( max( dist.mat ), 0.1), 0.1)
     distance_cutoff <- min( possible_cutoffs[ sapply(possible_cutoffs, function(cut) sum(dist.mat<cut)) >= clonal.area ] )
     
     #save the blank version of the raster matrix #
@@ -505,7 +512,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         # if nucleus outside parent then will have been set to Inf therefore the matrix will lack a 0 #
         bad_nucleus <- sapply( sapply( 1:length(daughters), function(i) which( nuclei.dists[[i]] == 0 )), length) == 0
         if( any( bad_nucleus ) ){
-          # browser() # TESTING
+          browser() # TESTING
           stop( paste0( "(BUG) chosen nucleus outside of parent for clone ", daughters[ bad_nucleus ], ". Try rerunning.") )
         }
         
@@ -524,7 +531,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         growth.rate <-  resolution.index / rate.modifier
         
         # caluclate max grow for biggest clone #
-        max_growth <- amfFunctions::mceiling( max(clone.areas), growth.rate)
+        max_growth <- mceiling( max(clone.areas), growth.rate)
 
         #don't strt grow from 0 to save time - grow in one step until the point you might encourter other clones #
         # if only one daughter clone then you don't need to grow them at all - go straight to max size #
@@ -532,7 +539,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           
           # shuold be able to grow first to where none of them are touching to speed things up #
           # Use minimum distance between clones nucleo to calculate this #
-          min_growth <-  amfFunctions::mfloor( sum( nuclei.dists[[1]] < nuclei_min_distance * 0.45 ),  growth.rate ) ## function mfloor is below
+          min_growth <-  mfloor( sum( nuclei.dists[[1]] < nuclei_min_distance * 0.45 ),  growth.rate ) ## function mfloor is below
           
         }
         
@@ -584,7 +591,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           avialible.space <- sapply( 1:length( daughters ), function(i) max( avialible.space[[i]] ))
           distance_cutoffs <- sapply( 1:length(daughters), function(i){
             
-            rounded.area <- amfFunctions::mround( avialible.space[[i]], 0.1 ) 
+            rounded.area <- mround( avialible.space[[i]], 0.1 ) 
             cut.options <- seq( resolution.index / 100 , rounded.area, resolution.index / 100 )
             clone_areas_for_cut_offs <- sapply(cut.options, function(cut) sum( nuclei.dists[[i]] < cut & is_parent_not_sister[[i]] ))
             less_then_target_area <- clone_areas_for_cut_offs <= areas[ names(areas) == daughters[i] ]
@@ -609,7 +616,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         # test that all clones we are trying to plot are present in raster #
         clones.present <- sapply( daughters, function( clone ) any( clones_rasterised == clone ) )
         if( any( !clones.present ) ){
-          warning( paste0( "Clone ", daughters[ !clones.present ], " is missing in the raster data, the CCF of this clone is too small for the given resolution of the plot\n this clone wll not be shown\n" ) )
+          warning( paste0( "Clone ", daughters[ !clones.present ], " is missing in the raster data, the CCF of this clone is too small for the given resolution of the plot\n this clone will not be shown\n" ) )
           daughters <- daughters[ clones.present ]
         }
         
@@ -631,7 +638,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         } else  clones.finalised <- TRUE
         
         # only allow certain number of repeats and then give up (default = 10) #
-        if( repeati == repeat.limit ){ cat( paste0( "reached repeat limit to achieve continuous daughter clones (", paste(names( are_continuous )[ !are_continuous ], collapse = " "), ") in parent clone ", parent, "\n" ) ) ; clones.finalised <- TRUE }
+        non_cont <- paste(names( are_continuous )[ !are_continuous ], collapse = ", ")
+        if( repeati == repeat.limit ){ cat( paste0( "reached repeat limit to achieve continuous daughter clones (", non_cont, ") in parent clone ", parent, "\n" ) ) ; clones.finalised <- TRUE }
         
         if( clones.finalised ==  TRUE ){
         
@@ -884,6 +892,276 @@ make.distance.matrix <- function( matrix.outline = clones_rasterised, nucleus = 
 }
 
 
+#' function to order tree root -> branches -> leaves
+#'
+#'
+#'
+#'
+#' @export
+logically.order.tree <- function(tree){
+  
+  # if only 1 clone on tree then just output it as it is #
+  if( all( tree == unique(tree)[1] ) ) return(tree)
+  
+  ### assign levels to each parent clone depending on how near the trunk ###
+  
+  # work out the root (the only clone tht's never a daughter ) #
+  root <- unique( tree[,1] [! tree[,1] %in% tree[,2] ] )
+  
+  # check that there is one 'root' this means there is no true root output error #
+  if( length(root) > 1 ) stop( "Tree is not rooted. Please provide one clone from which all others arise.")
+  
+  # check that no clone has two parents (impossible) #
+  dups.i <- duplicated( tree[,2] )
+  if( any( dups.i ) ) stop( paste0( "Clone(s)", tree[ dups.i, 2 ], "have multiple parents in tree. Not possible." ) )
+  
+  # make empty list for levels of each clone #
+  levels <- rep(NA,nrow(tree))
+  
+  # aasign the root to level 1 #
+  levels[tree[,1] %in% root ] <- 1
+  
+  # list aall the daughter's of root to work out the level #
+  daughters <- tree[ tree[,1] %in% root,2]
+  
+  # go down the tree in levels and asssign clones correct levels #
+  l <- 1
+  repeat{
+    l <- l + 1
+    parents <- daughters
+    levels[tree[,1] %in% parents ] <- l
+    daughters <- tree[ tree[,1] %in% parents,2]
+    if(all(!is.na(levels))) break
+  }
+  tree <- tree[order(levels),]
+  
+  if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree, ncol = 2, byrow = TRUE)
+  
+  return(tree)
+  
+}
+
+
+
+#' function to remove clones from a phenogenetic tree matrix
+#'
+#' This maintains parent -> daughter relationships,  even if an intermediate
+#' (branch) clone is being removed
+#'
+#'
+#' @export
+remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = NA){
+  
+  # check that info have been provided on what clones to remove
+  if(all(is.na(clones.to.remove)) & all(is.na(clones.to.keep))){
+    stop("you have not provided info on which clones to remove")
+  }
+  
+  # check classes are correct #
+  clones.to.keep <- as.character( clones.to.keep )
+  tree <- as.matrix( tree )
+  
+  # define list of all clones in the tree #
+  all.clones <- unique(as.character(tree))
+  
+  # if clones to keep specific rather than clones         ##
+  # to remove then work out from this which to be removed ##
+  if(all(is.na(clones.to.remove))){
+    clones.to.remove <- setdiff(all.clones,clones.to.keep)
+  }
+  
+  # ensure class is correct and all clones specified to keep are in the tree matrix #
+  clones.to.remove <- as.character(clones.to.remove)
+  clones.to.keep <- clones.to.keep[clones.to.keep %in% all.clones]
+  
+  # if nothing to remove that is ctually ono the tree then just return the tree with a warning #
+  if( length(clones.to.remove) == 0 ){
+    warning( "no clones specified to remove that are on the tree\n")
+    return(tree)
+  }
+  
+  # order the tree trunk -> branches -> leaves #
+  tree <- logically.order.tree(tree)
+  
+  # get the root clone #
+  root <- tree[ 1, 1 ]
+  
+  # if only the root left then return root as parent and daughter to maintaian the same structure #
+  if(all(clones.to.keep==root)){
+    return(matrix(c(root,root),ncol = 2, byrow = TRUE))
+  }
+  
+  # now loop round ecah clone to remove, get rid of all relationships its involved in and  #
+  # then reassign aany daughter(s) to its parent                                           #
+  for(clone in clones.to.remove){
+    parent <- tree[tree[,2]==clone,1]
+    if(any(tree[,1]==clone)){
+      daughters <- tree[tree[,1]==clone,2]
+      tree <- rbind(tree, matrix(c(rep(parent,length(daughters)),daughters),ncol = 2))
+    }
+    tree <- tree[!(tree[,1]==clone | tree[,2]==clone),]
+    if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree,ncol = 2,byrow = TRUE)
+  }
+  
+  # return pruned tree #
+  return(tree)
+  
+  # END #
+  
+}
+
+
+#' Function to correct CCFs when sum of daughters CCF > parent CCF 
+#'
+#'
+#'
+#'
+#' @export
+make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , parent.adjust = 1,
+                                       decrease.daughters = TRUE, increase.parents = FALSE ){
+  
+  # one of decrease daughters or parents must be true
+  if( all( !decrease.daughters & !increase.parents ) ) cat( "Please set either decrease.daughters or decrease.parents arguments to TRUE or cannot correct tree\n" )
+  if( increase.parents == TRUE ) decrease.daughters <- FALSE
+  
+  # order tree trunk -> leaf #
+  tree.mat <- logically.order.tree( tree.mat )
+  
+  # limit to clones in CCF table #
+  tree.clones <- unique( as.numeric(tree.mat) )
+  if( !all( tree.clones %in% CCF.data$clones) ) tree.mat <- remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones )
+  
+  # get root #
+  root <- tree.mat[ 1, 1 ]
+  
+  # get ordered list of parents #
+  parent.order <- unique(tree.mat[,1])
+  if( decrease.daughters == FALSE ) parent.order <- rev( parent.order )
+  
+  # detect if fractions or percentages #
+  is_frac <- CCF.data[ CCF.data$clones ==  root, "CCF" ] < 2
+  if( is_frac ) clonal_CCF <- 1 else clonal_CCF <- 100
+  
+  # for each parent check if it has CCF < sum of daughters if so correct it #
+  for(parent in parent.order){
+    
+    # get names of daughteer clones #
+    daughters <- tree.mat[ tree.mat[, 1] == parent, 2 ]
+    
+    # get row indices for daughters and parent #
+    parentrow <- which( CCF.data$clones == parent )
+    daughterrows <- which( CCF.data$clones %in% daughters )
+    
+    # get CCF values #
+    parent.CCF <- CCF.data[ parentrow, "CCF" ]
+    daughter.total.CCF <- sum( CCF.data[ daughterrows, "CCF" ] )
+    
+    # if decrease parent == TRUE & daughter CCF > parent CCF then increase parent CCF to match daughters, then if #
+    # parent CCF > 1 then adjustt all CCFs on the tree to allow parent CCF < 1 #
+    # if decrease daughter == TRUE & daughter CCF > parent CCF then decrease daughter CCFs to match paarent, then if #
+    # parent adjust allows soome wiggle room for niose in CCF data - default = 0  howeever #
+    if( parent.adjust * parent.CCF < daughter.total.CCF ){
+      if( daughter.total.CCF / parent.CCF > warning.limit ){
+        if( decrease.daughters  )  type <- "Decreasing daughter CCFs proportionally" else type <- "Increasing parent CCF"
+        cat( paste0("        ", "clone ", parent, "'s daughters have total CCF which is ", signif( (daughter.total.CCF * clonal_CCF) / parent.CCF, 3 ), "% its own CCF. ", type, "  so total CCF of daughters = parent\n") )
+      }
+      if( increase.parents  ) CCF.data[ parentrow, "CCF" ] <- daughter.total.CCF * parent.adjust
+      if( decrease.daughters  ) CCF.data[ daughterrows, "CCF" ] <- sapply(daughterrows, function(rowi) (CCF.data[ rowi, "CCF" ] / daughter.total.CCF) * parent.CCF )
+    }
+  }
+  
+  # normalise to root #
+  # if the clonal cluster CCF needed to be increased then adjust this back down too 1 and adjust all other clones by similar margin #
+  clonalCCF.change <- CCF.data$CCF[1] / clonal_CCF
+  if( clonalCCF.change > 1 ) cat( paste0("        Clonal CCF needed increasing by ", clonalCCF.change * 100, "% to accommodate daughters. Therefore decreasing all CCFs proportionally so clonal CCF == 1 again\n") )
+  
+  # ensure clonal cluster = 1 #
+  CCF.data$CCF <- ( (CCF.data$CCF * clonal_CCF) / CCF.data[ CCF.data$clones == root, "CCF"] ) 
+  
+  return( CCF.data )
+}
+
+
+
+
+
+
+plot_grouped_cloneMaps <- function(tumour_group_data, group_name, rasters.list, byRegion = FALSE, group_order = NA, track = TRUE, no.cols = 20 ){
+  
+  groups <- tumour_clin[ order(get(group_name)), .N, by = get(group_name)]
+  setnames(groups, c("group","N"))
+  
+  if( !all(is.na(group_order)) ) groups <-  groups[ match( group_order, group), ]
+  
+  groups[, rounded_n := mceiling(N, no.cols) ][,
+                                               nrow := rounded_n / no.cols ][,
+                                                                             cummul_rounded_n := sapply( 1:nrow(groups), function(i)  sum(rounded_n[1:i])) ]
+  
+  ## now make the layout for the plot ##
+  
+  layout <- do.call(rbind, lapply( 1:nrow(groups), function(i){
+    
+    if(i == 1) cum_before <- 2 else cum_before <- groups[i-1,cummul_rounded_n]+ 1 + i
+    
+    cum_after <- groups[i,cummul_rounded_n] + i
+    
+    out <- matrix( cum_before:cum_after, nrow = groups[i,nrow], byrow = TRUE)
+    
+    out <- rbind( matrix(rep(cum_before-1, no.cols * 2), nrow = 2), out)
+    
+    return( out )
+    
+  }))
+  
+  ## now assign each tumour a piont in the layout ##
+  
+  positions <- data.table( pos = 1:max(layout),
+                           to_plot = unlist(lapply(groups[,group], function( group ){
+                             out <- group
+                             out <- c(out, tumour_clin[ get(group_name) == group, tumour ])
+                             igroup <- which(groups$group == group)
+                             out <- c(out, rep(NA, groups[igroup, rounded_n] - length(out) + 1))
+                             return(out)
+                           })) )
+  
+  
+  ## now plot all the tumour maps ##
+  
+  
+  #pdf(file = paste0(outputs.folder,"/",date,"_421_tumour_maps_by_Tumour_by_Stage.pdf"), width = 20, height = 30)
+  
+  layout(layout)
+  
+  for( i in 1:nrow(positions) ){
+    
+    is.sample <- grepl( "LTX", positions[i, to_plot] )
+    
+    par( mai = c(0, 0, 0, 0), xpd = NA)
+    
+    if( is.sample == TRUE ){
+      
+      tumour <- positions[i, to_plot]
+      
+      if(track == TRUE) cat( paste0( which(positions[ grepl("LTX",to_plot), to_plot] == tumour ), " " ) )
+      
+      cloneMap::cloneMap( clone_map = rasters.list[[ which( names(trees) == tumour ) ]] )
+      
+    } else {
+      
+      plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+      
+      if( !is.na( positions[i, to_plot] ))  text(x = 0.5, y = 0.5, positions[i, to_plot], cex =8, col = "black")
+      
+    }
+    
+  }
+  
+  #invisible( dev.off() )
+  
+}
+
+
+
 ##########################################
 ### supprting functions (not exported) ###
 ##########################################
@@ -917,13 +1195,13 @@ coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
 # should be avioded if possible                                                                          #
 
 continuous.test <- function( clone_position ){
-  
+
   # how many core do you haave access to for parrelellisation? #
   num_cores <- parallel::detectCores() / 2
   # only worth parrellelising if > 10 cores, otheriwise actually slows code! - need to test further #
   if( num_cores < 10 ) num_cores <- 1
   # get cordinataes of all position for this clone #
-  coords <- as.data.table( matrix.index.to.coordinates( which( clone_position ), nrow = nrow( clone_position ), ncol = ncol( clone_position ) ) ) # matrix.index.to.coordinates specified above
+  coords <- matrix.index.to.coordinates( which( clone_position ), nrow = nrow( clone_position ), ncol = ncol( clone_position ) )  # matrix.index.to.coordinates specified above
   coords_ids <- paste(coords[, "x"] , coords[, "y"], sep = "_" )
   
   # make as list #
@@ -1018,83 +1296,17 @@ recenter_distance_matrix <- function( clone_position ){
   
 }
 
+#' function to round to a specific base 
 
+mround <- function( x, base ) base * round( x / base )
 
+#' function to roun down to a specific base 
 
+mfloor <- function( x, base ) base * floor( x / base )
 
-plot_grouped_cloneMaps <- function(tumour_group_data, group_name, rasters.list, byRegion = FALSE, group_order = NA, track = TRUE, no.cols = 20 ){
-  
-  groups <- tumour_clin[ order(get(group_name)), .N, by = get(group_name)]
-  setnames(groups, c("group","N"))
-  
-  if( !all(is.na(group_order)) ) groups <-  groups[ match( group_order, group), ]
-  
-  groups[, rounded_n := mceiling(N, no.cols) ][,
-                                               nrow := rounded_n / no.cols ][,
-                                                                             cummul_rounded_n := sapply( 1:nrow(groups), function(i)  sum(rounded_n[1:i])) ]
-  
-  ## now make the layout for the plot ##
-  
-  layout <- do.call(rbind, lapply( 1:nrow(groups), function(i){
-    
-    if(i == 1) cum_before <- 2 else cum_before <- groups[i-1,cummul_rounded_n]+ 1 + i
-    
-    cum_after <- groups[i,cummul_rounded_n] + i
-    
-    out <- matrix( cum_before:cum_after, nrow = groups[i,nrow], byrow = TRUE)
-    
-    out <- rbind( matrix(rep(cum_before-1, no.cols * 2), nrow = 2), out)
-    
-    return( out )
-    
-  }))
-  
-  ## now assign each tumour a piont in the layout ##
-  
-  positions <- data.table( pos = 1:max(layout),
-                           to_plot = unlist(lapply(groups[,group], function( group ){
-                             out <- group
-                             out <- c(out, tumour_clin[ get(group_name) == group, tumour ])
-                             igroup <- which(groups$group == group)
-                             out <- c(out, rep(NA, groups[igroup, rounded_n] - length(out) + 1))
-                             return(out)
-                           })) )
-  
-  
-  ## now plot all the tumour maps ##
-  
-  
-  #pdf(file = paste0(outputs.folder,"/",date,"_421_tumour_maps_by_Tumour_by_Stage.pdf"), width = 20, height = 30)
-  
-  layout(layout)
-  
-  for( i in 1:nrow(positions) ){
-    
-    is.sample <- grepl( "LTX", positions[i, to_plot] )
-    
-    par( mai = c(0, 0, 0, 0), xpd = NA)
-    
-    if( is.sample == TRUE ){
-      
-      tumour <- positions[i, to_plot]
-      
-      if(track == TRUE) cat( paste0( which(positions[ grepl("LTX",to_plot), to_plot] == tumour ), " " ) )
-      
-      cloneMap::cloneMap( clone_map = rasters.list[[ which( names(trees) == tumour ) ]] )
-      
-    } else {
-      
-      plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
-      
-      if( !is.na( positions[i, to_plot] ))  text(x = 0.5, y = 0.5, positions[i, to_plot], cex =8, col = "black")
-      
-    }
-    
-  }
-  
-  #invisible( dev.off() )
-  
-}
+#' function to round up to a specific base 
+
+mceiling <- function( x, base ) base * ceiling( x / base )
 
 
 
