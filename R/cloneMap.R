@@ -156,6 +156,10 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   
   # Need to deal with numeric clone names for the matrix rasterisation #
   # create a conversion table
+  
+  # ensure tree data is a matrix
+  tree.mat <- as.matrix(tree.mat)
+  
   orig_names <- unique( c(tree.mat[,1],  tree.mat[,2], CCF.data$clones ) )
   clone_names <- data.frame( orig = orig_names,
                              new = 1:length(orig_names))
@@ -1017,13 +1021,13 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
   # now loop round ecah clone to remove, get rid of all relationships its involved in and  #
   # then reassign aany daughter(s) to its parent                                           #
   for(clone in clones.to.remove){
-    parent <- tree[tree[,2]==clone,1]
+    parent <- tree[tree[,2] == clone, 1]
     if(any(tree[,1]==clone)){
-      daughters <- tree[tree[,1]==clone,2]
+      daughters <- tree[tree[,1]==clone, 2]
       tree <- rbind(tree, matrix(c(rep(parent,length(daughters)),daughters),ncol = 2))
     }
-    tree <- tree[!(tree[,1]==clone | tree[,2]==clone),]
-    if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree,ncol = 2,byrow = TRUE)
+    tree <- tree[!(tree[, 1]==clone | tree[, 2]==clone),]
+    if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree, ncol = 2, byrow = TRUE)
   }
   
   # return pruned tree #
