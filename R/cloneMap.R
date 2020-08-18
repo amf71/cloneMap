@@ -194,7 +194,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   } else {
     
     # if clone colours provided then make clone names into internal numeric clone names
-    names(clone.cols) <- clone_names[ match( clone.cols$clones, clone_names$orig ), "new" ]
+    names(clone.cols) <- clone_names[ match( names(clone.cols), clone_names$orig ), "new" ]
     
   }
   
