@@ -169,8 +169,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   tree.mat[, 1] <- clone_names[ match( tree.mat[, 1], clone_names$orig ), "new" ]
   tree.mat[, 2] <- clone_names[ match( tree.mat[, 2], clone_names$orig ), "new" ]
   
-  # make sure tree class is correct and it looks like a tree #
-  tree.mat <- as.matrix( tree.mat )
+  # make sure tree looks like a tree #
   if( !ncol(tree.mat) == 2 ) stop( 'tree input should be a table with two columns with 
                                       each row indicating a parent (column 1) and corresponding 
                                       child (column 2' )
@@ -236,7 +235,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree( tree.mat ) 
     
     ### specify which clone is the root ###
-    # as tree as has beeen ordered this been be the parent (ie column 1) in the first relationship #
+    # as tree as has been ordered this been be the parent (ie column 1) in the first relationship #
     root <- tree.mat[1, 1]
     
     # clone CCF expected in percentages not fractions - if looks like fractions (clonal CCF < 2) then x 100 #
@@ -809,14 +808,14 @@ make_clone_col_input <- function( clones, brewer.palette = "Paired" ){
     getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in arguments, default = "Paired"
     clone.cols <- getPalette( ncols )
     
-    # if < 3 clones then lmim to correct num of colours
-    clone.cols <- clone.cols[ 1:length(clones) ]
-    
   } else {
     
     clone.cols <- RColorBrewer::brewer.pal(n = ncols, name = brewer.palette)
     
   }
+  
+  # if < 3 clones then lmim to correct num of colours
+  clone.cols <- clone.cols[ 1:length(clones) ]
   
   names(clone.cols) <- clones
   
