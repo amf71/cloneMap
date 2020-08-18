@@ -796,15 +796,25 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
 #' @export
 make_clone_col_input <- function( clones, brewer.palette = "Paired" ){
   
-  if( length(clones) > 8 ){ 
+  ncols <- length(clones)
+  
+  # brewer does not allow extraction of < 3 colours
+  if(ncols < 3) ncols <- 3
+  
+  # all palettes have at least 8 colours 
+  # ig more than this then should extend the palette with colourRampPalette
+  if( ncols > 8 ){ 
     
     # suppress warning - gets max number of colours from pallette - none have > 12 #
     getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in arguments, default = "Paired"
-    clone.cols <- getPalette( length( clones ) )
+    clone.cols <- getPalette( ncols )
+    
+    # if < 3 clones then lmim to correct num of colours
+    clone.cols <- clone.cols[ 1:length(clones) ]
     
   } else {
     
-    clone.cols <- RColorBrewer::brewer.pal(n = length(clones), name = brewer.palette)
+    clone.cols <- RColorBrewer::brewer.pal(n = ncols, name = brewer.palette)
     
   }
   
