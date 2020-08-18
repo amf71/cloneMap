@@ -780,7 +780,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   
 }
 
-#' Function to create clone colour table with a RColourBrewer pallette
+#' Function to create clone colour table with a RColourBrewer palette
 #' 
 #' 
 #' @export

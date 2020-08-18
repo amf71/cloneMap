@@ -4,7 +4,7 @@ setwd("/Volumes/proj-tracerx-lung/tctProjects/frankella/R_packages/cloneMaps")
 
 # source the latest code #
 source('R/cloneMap.R')
-
+source('../amfFunctions/R/FrankellA.functions.R')
 # load the example data #
 
 example_files <- system("ls data", intern = TRUE)
