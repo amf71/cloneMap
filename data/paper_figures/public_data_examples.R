@@ -4,7 +4,7 @@
 ####                                                            ####
 ####============================================================####
 
-# Author : ALexander M Frankell
+# Author : Alexander M Frankell
 # Date : 10-Aug-2020
 
 
@@ -19,7 +19,7 @@ library(cloneMap)
 
 
 ##======================================================================##
-## down load the example data from the web and format to expected input ##
+## download the example data from the web and format to expected input ##
 ##======================================================================##
 
 # Data from McPherson et al 2016 Nature genetics Sorab Shah lab on Ovarian cancer #
@@ -77,7 +77,7 @@ ovarian_trees <- list( "1" = matrix( c("A", "B",
 
 
 # 'prevalence' in ovarian data is not CCF but the CCF minus all daughter CCFs     #
-# is what % of cells actually contain only this genotype (and no other mutations) #
+# ie what % of cells actually contain only this genotype (and no other mutations) #
 # convert back to CCFs using the tree 
 
 ovarian_ccfs[, ccf := sapply( 1:.N, function( i ){
@@ -85,12 +85,16 @@ ovarian_ccfs[, ccf := sapply( 1:.N, function( i ){
   pat <- ovarian_ccfs[i, patient_id ] 
   tree <- ovarian_trees[ names(ovarian_trees) == pat ][[1]]
   
-  # get all the daufghters reursively for this clone
+  # get all the daughters recursively for this clone
   clone <- ovarian_ccfs[i, clone_id ]
+  
   daughters <- clone
+
   repeat{
-  daughters.new <- unique( c( daughters, tree[ tree[,1] %in% daughters, 2] ) )
-  if( all(daughters.new %in% daughters) ) break else daughters <- daughters.new
+    
+    daughters.new <- unique( c( daughters, tree[ tree[,1] %in% daughters, 2] ) )
+    if( all(daughters.new %in% daughters) ) break else daughters <- daughters.new
+    
   }
   
   # add the CCF of all of these clones in this sample
@@ -108,6 +112,7 @@ data_loc <- 'https://www.nejm.org/doi/suppl/10.1056/NEJMoa1616288/suppl_file/nej
 GET(data_loc, write_disk(tf <- tempfile(fileext = ".xlsx")))
 lung_ccfs <- as.data.table( read_excel( tf , sheet = "TableS3", skip = 19 ) )
 lung_trees <- as.data.table( read_excel( tf , sheet = "TableS7", skip = 1 ) )
+lung_clin <- as.data.table( read_excel( tf , sheet = "TableS2", skip = 1 ) )
 
 ## extract the CCFs per clone per sample from the lung data (currently per variant) ##
 # remove cases / mutations without PyClone data
@@ -155,6 +160,10 @@ lung_trees <- lapply( lung_trees$SampleID, function(sample){
 lung_ccfs[, patient_ccfs := mean( ccf ), by = .( SampleID, PyClonePhyloCluster )]
 ovarian_ccfs[, patient_ccf := mean( ccf ), by = .(patient_id, clone_id)]
 
+# some CCFs in ovarian data far lower than sensitivity, adjust to 0
+ovarian_ccfs[ patient_ccf < 0.01, patient_ccf := 0]
+ovarian_ccfs[ ccf < 0.01, ccf := 0]
+
 
 ##==================================##
 ## Plot clone maps at patient level ##
@@ -165,42 +174,110 @@ ovarian_ccfs[, patient_ccf := mean( ccf ), by = .(patient_id, clone_id)]
 ovarian_patient_maps <- lapply( unique(ovarian_ccfs$patient_id), function( pat ){
   
   # get ccfs with correct input names
-  ccfs <- ovarian_ccfs[ ! duplicated( ovarian_ccfs$clone_id ) & patient_id == pat, .(clone_id, patient_ccf) ]
+  ccfs <- ovarian_ccfs[ patient_id == pat ][ ! duplicated( clone_id ), .(clone_id, patient_ccf) ]
   names(ccfs) <- c("clones", "CCF")
   
   #get tree
   tree <- ovarian_trees[ names(ovarian_trees) == pat ][[1]]
   
-  cloneMap( tree.mat = tree, CCF.data = ccfs, output.Clone.map.obj = T, high_qualty_mode = TRUE, plot.data = F )
+  return(
+    
+    cloneMap( tree.mat = tree, 
+              CCF.data = ccfs, 
+              output.Clone.map.obj = TRUE, 
+              high_qualty_mode = TRUE, 
+              plot.data = FALSE )
+    
+  )
   
 })
 
-names(ovarian_patient_maps) <- ovarian_ccfs$patient_id
+names(ovarian_patient_maps) <- unique( ovarian_ccfs$patient_id )
 
 
 ovarian_region_maps <- lapply( unique( paste( ovarian_ccfs$paper_id, ovarian_ccfs$patient_id) ) , function( sample_pat ){
   
   # get ccfs with correct input names
-  ccfs <- ovarian_ccfs[ ! duplicated( ovarian_ccfs$clone_id ) & paste( paper_id, patient_id) == sample_pat, .(clone_id, ccf) ]
+  ccfs <- ovarian_ccfs[ paste( paper_id, patient_id) == sample_pat ][ ! duplicated( clone_id ), .(clone_id, ccf) ]
   names(ccfs) <- c("clones", "CCF")
   
   #get tree
-  tree <- ovarian_trees[ names(ovarian_trees) == pat ][[1]]
+  tree <- ovarian_trees[ names(ovarian_trees) == strsplit(sample_pat, split = " ")[[1]][2] ][[1]]
   
-  cloneMap( tree.mat = tree, CCF.data = ccfs, output.Clone.map.obj = T, high_qualty_mode = TRUE, plot.data = F )
+  return(
+    
+    cloneMap( tree.mat = tree, 
+              CCF.data = ccfs, 
+              output.Clone.map.obj = TRUE, 
+              high_qualty_mode = TRUE, 
+              plot.data = FALSE )
+    
+  )
   
 })
 
 names(ovarian_region_maps) <- unique( paste( ovarian_ccfs$paper_id, ovarian_ccfs$patient_id) )
 
+# lung
+
+
+lung_patient_maps <- lapply( unique(lung_ccfs$SampleID), function( pat ){
+  
+  #a few tumour ahve no tree
+  if( !any(names(lung_trees) == pat) ) return( NA )
+  
+  # get ccfs with correct input names
+  ccfs <- lung_ccfs[ SampleID == pat ][ ! duplicated( PyClonePhyloCluster ), .(PyClonePhyloCluster, patient_ccfs) ]
+  names(ccfs) <- c("clones", "CCF")
+  
+  #get tree
+  tree <- lung_trees[ names(lung_trees) == pat ][[1]]
+  
+  return(
+    
+    cloneMap( tree.mat = tree, 
+              CCF.data = ccfs, 
+              output.Clone.map.obj = TRUE, 
+              high_qualty_mode = TRUE, 
+              plot.data = FALSE )
+    
+  )
+  
+})
+
+names(lung_patient_maps) <- unique( lung_ccfs$SampleID )
+
+# save the clone map objects
+
+save(lung_patient_maps, file = 'data/paper_figures/TRACERX_lung_tumour_maps.rda')
+save(ovarian_patient_maps, file = 'data/paper_figures/Shah_ovarian_tumour_maps.rda')
+save(ovarian_region_maps, file = 'data/paper_figures/Shah_ovarian_region_maps.rda')
+
+##================================##
+## plot two clone maps to compare ##
+##================================##
+
+pdf( "data/paper_figures/output_plots/complex_eg_CRU0079.pdf" )
+
+cloneMap::cloneMap( clone_map = lung_patient_maps[[ which(names(lung_patient_maps) == 'CRUK0079') ]] )
+
+invisible( dev.off() )
+
+pdf( "data/paper_figures/output_plots/complex_eg_CRU0094.pdf" )
+
+cloneMap::cloneMap( clone_map = lung_patient_maps[[ which(names(lung_patient_maps) == 'CRUK0094') ]] )
+
+invisible( dev.off() )
 
 ##========================================##
 ## function to plot groups of tumour maps ##
 ##========================================##
 
-plot_grouped_tumour_maps <- function(tumour_group_data, group_name, rasters.list, byRegion = FALSE, group_order = NA, track = TRUE, no.cols = 20 ){
+plot_grouped_tumour_maps <- function(tumour_group_data, group_name, sample_name, rasters.list, 
+                                     sample_identifier, byRegion = FALSE, group_order = NA, track = TRUE, 
+                                     no.cols = 20 ){
   
-  groups <- tumour_clin[ order(get(group_name)), .N, by = get(group_name)]
+  groups <- tumour_group_data[ order(get(group_name)), .N, by = get(group_name)]
   setnames(groups, c("group","N"))
   
   if( !all(is.na(group_order)) ) groups <-  groups[ match( group_order, group), ]
@@ -230,7 +307,7 @@ plot_grouped_tumour_maps <- function(tumour_group_data, group_name, rasters.list
   positions <- data.table( pos = 1:max(layout),
                            to_plot = unlist(lapply(groups[,group], function( group ){
                              out <- group
-                             out <- c(out, tumour_clin[ get(group_name) == group, tumour ])
+                             out <- c(out, tumour_group_data[ get(group_name) == group, get(sample_name) ])
                              igroup <- which(groups$group == group)
                              out <- c(out, rep(NA, groups[igroup, rounded_n] - length(out) + 1))
                              return(out)
@@ -246,7 +323,7 @@ plot_grouped_tumour_maps <- function(tumour_group_data, group_name, rasters.list
   
   for( i in 1:nrow(positions) ){
     
-    is.sample <- grepl( "LTX", positions[i, to_plot] )
+    is.sample <- grepl( sample_identifier, positions[i, to_plot] )
     
     par( mai = c(0, 0, 0, 0), xpd = NA)
     
@@ -254,9 +331,9 @@ plot_grouped_tumour_maps <- function(tumour_group_data, group_name, rasters.list
       
       tumour <- positions[i, to_plot]
       
-      if(track == TRUE) cat( paste0( which(positions[ grepl("LTX",to_plot), to_plot] == tumour ), " " ) )
+      if(track == TRUE) cat( paste0( which(positions[ grepl(sample_identifier, to_plot), to_plot] == tumour ), " " ) )
       
-      cloneMap::cloneMap( clone_map = rasters.list[[ which( names(trees) == tumour ) ]] )
+      cloneMap::cloneMap( clone_map = rasters.list[[ which( names(rasters.list) == tumour ) ]] )
       
     } else {
       
@@ -273,9 +350,62 @@ plot_grouped_tumour_maps <- function(tumour_group_data, group_name, rasters.list
 }
 
 
+standard.layout <- matrix( 1:9 , byrow = TRUE, ncol = 3)
+
+# plot some ovarian data by region
+
+patient <- " 3$"
+regions <- names(ovarian_region_maps)[ grepl( patient, names(ovarian_region_maps) ) ]
+
+clone_colours <- make_clone_col_input( unique( ovarian_ccfs[ patient_id == "3", clone_id ] ) )
+
+pdf( "data/paper_figures/output_plots/Ovarian_3_regions.pdf" )
+
+layout( standard.layout )
+
+for(region in regions)  cloneMap::cloneMap( clone_map = ovarian_region_maps[[ which( names(ovarian_region_maps) == region ) ]], clone.cols = clone_colours )
+  
+invisible( dev.off() )
+
+patient <- " 10$"
+regions <- names(ovarian_region_maps)[ grepl( patient, names(ovarian_region_maps) ) ]
+
+clone_colours <- make_clone_col_input( unique( ovarian_ccfs[ patient_id == "3", clone_id ] ) )
+
+pdf( "data/paper_figures/output_plots/Ovarian_10_regions.pdf" )
+
+layout( standard.layout )
+
+for(region in regions)  cloneMap::cloneMap( clone_map = ovarian_region_maps[[ which( names(ovarian_region_maps) == region ) ]], clone.cols = clone_colours )
+
+invisible( dev.off() )
 
 
+# plot all ovarian tumours
 
+pdf( "data/paper_figures/output_plots/Ovarian_tumours.pdf" )
+
+layout( standard.layout )
+
+for(tumour in names(ovarian_patient_maps) )  cloneMap::cloneMap( clone_map = ovarian_patient_maps[[ which( names(ovarian_patient_maps) == tumour ) ]] )
+
+invisible( dev.off() )
+
+
+# plot all lung tumours by stage
+
+lung_clin <- as.data.table( lung_clin )
+
+pdf( "data/paper_figures/output_plots/TRACERx100.pdf" )
+
+plot_grouped_tumour_maps( tumour_group_data =  lung_clin, 
+                          group_name = "Stage", 
+                          sample_name = 'TRACERxID',
+                          sample_identifier = "CRUK", 
+                          rasters.list = lung_patient_maps, 
+                          no.cols = 10 )
+
+invisible( dev.off() )
 
 
 
