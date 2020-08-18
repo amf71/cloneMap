@@ -131,7 +131,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   CCF_data_supplied <- !all( is.na(CCF.data) )
   tree_data_supplied <- !all( is.na(tree.mat) )
   
-  if( !clone_map_data_supplied & !CCF_data_supplied & !tree_data_supplied ) stop( "Please provide either a phylogenetic tree matrix and a CCF table or a clone_map object")
+  if( !( clone_map_data_supplied | (CCF_data_supplied & tree_data_supplied) ) ) stop( "Please provide either a phylogenetic tree matrix and a CCF table or a clone_map object")
   
   
   # if tree supplied in raster input then extract from here #
@@ -140,8 +140,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # check class is correct (ie is it expected output from this function) #
     if( ! class(clone_map) == "Clone map" ) stop( "incorrect raster input" )
     tree.mat <- clone_map$tree
+    clone_names <- clone_map$names_match
+    CCF.data <- clone_map$CCFs
+    tree.mat <- clone_map$tree
     
-  } else{
+  } else {
   
   # check that names are correct #
   correct.names <- all( names(CCF.data) == c("clones", "CCF") )
@@ -176,7 +179,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   
   if( !clone_colours_supplied ){
     
-    # order the tree so the trunk and earl clones are always the same colours accross tumours #
+    # order the tree so the trunk and earl clones are always the same colours across tumours #
     if( nrow(tree.mat) > 1 ) tree.mat <- logically.order.tree(tree.mat)
     
     clones <- unique( as.numeric(c(tree.mat[,1], tree.mat[,2]) ) )
@@ -698,7 +701,12 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
       
-      clones_rasterised <- list( clone_matrix = clones_rasterised_plot, tree = tree.mat )
+      clones_rasterised <- list( clone_matrix = clones_rasterised_plot, 
+                                 tree = tree.mat, 
+                                 names_match = clone_names,
+                                 CCFs = CCF.data,
+                                 tree = tree.mat )
+      
       class(clones_rasterised) <- "Clone map"
       
       return( clones_rasterised )
