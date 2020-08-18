@@ -142,8 +142,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     tree.mat <- clone_map$tree
     clone_names <- clone_map$names_match
     CCF.data <- clone_map$CCFs
-    tree.mat <- clone_map$tree
-    
+
   } else {
   
   # check that names are correct #
@@ -704,8 +703,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       clones_rasterised <- list( clone_matrix = clones_rasterised_plot, 
                                  tree = tree.mat, 
                                  names_match = clone_names,
-                                 CCFs = CCF.data,
-                                 tree = tree.mat )
+                                 CCFs = CCF.data )
       
       class(clones_rasterised) <- "Clone map"
       
