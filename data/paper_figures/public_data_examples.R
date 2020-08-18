@@ -26,8 +26,8 @@ library(cloneMap)
 
 data_loc <- 'https://static-content.springer.com/esm/art%3A10.1038%2Fng.3573/MediaObjects/41588_2016_BFng3573_MOESM153_ESM.xlsx'
 
-GET(data_loc, write_disk(tf <- tempfile(fileext = ".xlsx"))) # takes a few minutes
-ovarian_ccfs <- as.data.table( read_excel( tf , sheet = "S9" ) )
+httr::GET(data_loc, httr::write_disk(tf <- tempfile(fileext = ".xlsx"))) # takes a few minutes
+ovarian_ccfs <- data.table::as.data.table( readxl::read_excel( tf , sheet = "S9" ) )
 
 # ovarian trees not present in supplementary but in figure 4 - copied from figures below:
 # col 1 = parent and col 2 = child
@@ -109,10 +109,10 @@ ovarian_ccfs[, ccf := sapply( 1:.N, function( i ){
 
 data_loc <- 'https://www.nejm.org/doi/suppl/10.1056/NEJMoa1616288/suppl_file/nejmoa1616288_appendix_2.xlsx'
 
-GET(data_loc, write_disk(tf <- tempfile(fileext = ".xlsx")))
-lung_ccfs <- as.data.table( read_excel( tf , sheet = "TableS3", skip = 19 ) )
-lung_trees <- as.data.table( read_excel( tf , sheet = "TableS7", skip = 1 ) )
-lung_clin <- as.data.table( read_excel( tf , sheet = "TableS2", skip = 1 ) )
+httr::GET(data_loc, httr::write_disk(tf <- tempfile(fileext = ".xlsx")))
+lung_ccfs <- data.table::as.data.table( readxl::read_excel( tf , sheet = "TableS3", skip = 19 ) )
+lung_trees <- data.table::as.data.table( readxl::read_excel( tf , sheet = "TableS7", skip = 1 ) )
+lung_clin <- data.table::as.data.table( readxl::read_excel( tf , sheet = "TableS2", skip = 1 ) )
 
 ## extract the CCFs per clone per sample from the lung data (currently per variant) ##
 # remove cases / mutations without PyClone data
@@ -127,18 +127,19 @@ lung_ccfs <- do.call( rbind, lapply( lung_ccfs, function( sample_table ){
   ccfs <- strsplit(sample_table$PyClonePhyloCCF, split = ";" ) 
   regions <- gsub( ":.*$", "" , ccfs[ sapply( ccfs, function(x) !all( x == "NA" ) ) ][[1]] )
   suppressWarnings( ccfs <- lapply( ccfs, function(x) as.numeric( gsub( "^.*:", "", x ) ) ) )
-  ccfs <- as.data.table( do.call( rbind, ccfs ) )
+  ccfs <- data.table::as.data.table( do.call( rbind, ccfs ) )
   names(ccfs) <- regions
   
   out <- cbind( sample_table[, .(SampleID, PyClonePhyloCluster )], ccfs ) 
   region_cols <- names(out)[ 3:ncol(out) ]
-  out <- melt( out, id.vars = c("SampleID", "PyClonePhyloCluster"),
-               measure.vars = region_cols,
-               variable.name = "sample",
-               value.name = "ccf" )
+  out <- data.table::melt( out, id.vars = c("SampleID", "PyClonePhyloCluster"),
+                           measure.vars = region_cols,
+                           variable.name = "sample",
+                           value.name = "ccf" )
   out[, .(ccf = round( mean( ccf ), 3 ) ), by = .(SampleID, PyClonePhyloCluster, sample) ]
-
+  
 }))
+
 
 ## now extract the trees in the expected format ##
 
@@ -152,7 +153,7 @@ lung_trees <- lapply( lung_trees$SampleID, function(sample){
   do.call( rbind, tree )
   
 })
- names(lung_trees) <- samples
+names(lung_trees) <- samples
 
 
 ### All ccf data at region level, also calculate ccfs over all samples in a patient ###
@@ -206,11 +207,11 @@ ovarian_region_maps <- lapply( unique( paste( ovarian_ccfs$paper_id, ovarian_ccf
   
   return(
     
-    cloneMap( tree.mat = tree, 
-              CCF.data = ccfs, 
-              output.Clone.map.obj = TRUE, 
-              high_qualty_mode = TRUE, 
-              plot.data = FALSE )
+    cloneMap::cloneMap( tree.mat = tree, 
+                        CCF.data = ccfs, 
+                        output.Clone.map.obj = TRUE, 
+                        high_qualty_mode = TRUE, 
+                        plot.data = FALSE )
     
   )
   
@@ -247,11 +248,32 @@ lung_patient_maps <- lapply( unique(lung_ccfs$SampleID), function( pat ){
 
 names(lung_patient_maps) <- unique( lung_ccfs$SampleID )
 
-# save the clone map objects
 
-save(lung_patient_maps, file = 'data/paper_figures/TRACERX_lung_tumour_maps.rda')
-save(ovarian_patient_maps, file = 'data/paper_figures/Shah_ovarian_tumour_maps.rda')
-save(ovarian_region_maps, file = 'data/paper_figures/Shah_ovarian_region_maps.rda')
+
+#=============================================#
+# save the save underlying data for the plots #
+#=============================================#
+
+# ccf data
+
+save(lung_ccfs, file = 'data/paper_figures/data/TRACERX_lung_ccfs.rda')
+save(ovarian_ccfs, file = 'data/paper_figures/data/Shah_ovarian_ccfs.rda')
+
+# tree data
+
+save(lung_trees, file = 'data/paper_figures/data/TRACERX_lung_trees.rda')
+save(ovarian_trees, file = 'data/paper_figures/data/Shah_ovarian_trees.rda')
+
+
+# clinical data for lung
+
+save(lung_clin, file = 'data/paper_figures/data/TRACERX_lung_clinical_data.rda')
+
+# maps
+
+save(lung_patient_maps, file = 'data/paper_figures/data/TRACERX_lung_tumour_maps.rda')
+save(ovarian_patient_maps, file = 'data/paper_figures/data/Shah_ovarian_tumour_maps.rda')
+save(ovarian_region_maps, file = 'data/paper_figures/data/Shah_ovarian_region_maps.rda')
 
 ##================================##
 ## plot two clone maps to compare ##
@@ -357,14 +379,14 @@ standard.layout <- matrix( 1:9 , byrow = TRUE, ncol = 3)
 patient <- " 3$"
 regions <- names(ovarian_region_maps)[ grepl( patient, names(ovarian_region_maps) ) ]
 
-clone_colours <- make_clone_col_input( unique( ovarian_ccfs[ patient_id == "3", clone_id ] ) )
+clone_colours <- cloneMap::make_clone_col_input( unique( ovarian_ccfs[ patient_id == "3", clone_id ] ) )
 
 pdf( "data/paper_figures/output_plots/Ovarian_3_regions.pdf" )
 
 layout( standard.layout )
 
 for(region in regions)  cloneMap::cloneMap( clone_map = ovarian_region_maps[[ which( names(ovarian_region_maps) == region ) ]], clone.cols = clone_colours )
-  
+
 invisible( dev.off() )
 
 patient <- " 10$"

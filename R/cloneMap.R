@@ -507,8 +507,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         # if nucleus outside parent then will have been set to Inf therefore the matrix will lack a 0 #
         bad_nucleus <- sapply( sapply( 1:length(daughters), function(i) which( nuclei.dists[[i]] == 0 )), length) == 0
         if( any( bad_nucleus ) ){
-          browser() # TESTING
+          
           stop( paste0( "(BUG) chosen nucleus outside of parent for clone ", daughters[ bad_nucleus ], ". Try rerunning.") )
+          
         }
         
         # grow clones regularly to allow clone to grow evenly relative to one another #
@@ -629,12 +630,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
             
           } else  if( track ) cat( paste0( "        ", "clone(s) ", paste( daughters[ !are_continuous ], collapse = " "), " not continuous so repeat...\n" ) )
           
+          # only allow certain number of repeats and then give up (default = 10) #
+          non_cont <- paste(names( are_continuous )[ !are_continuous ], collapse = ", ")
+          if( repeati == repeat.limit ){ cat( paste0( "reached repeat limit to achieve continuous daughter clones (", non_cont, ") in parent clone ", parent, "\n" ) ) ; clones.finalised <- TRUE }
           
         } else  clones.finalised <- TRUE
-        
-        # only allow certain number of repeats and then give up (default = 10) #
-        non_cont <- paste(names( are_continuous )[ !are_continuous ], collapse = ", ")
-        if( repeati == repeat.limit ){ cat( paste0( "reached repeat limit to achieve continuous daughter clones (", non_cont, ") in parent clone ", parent, "\n" ) ) ; clones.finalised <- TRUE }
         
         if( clones.finalised ==  TRUE ){
         
