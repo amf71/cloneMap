@@ -184,19 +184,12 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     #subset for clones also in CCF table
     if( CCF_data_supplied ) clones <- clones[ clones %in% CCF.data$clones ]
 
-    if( length(clones) > 8 ){ 
-      
-      # suppress warning - gets max number of colours from pallette - none have > 12 #
-      getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in arguments, default = "Paired"
-      clone.cols <- getPalette( length( clones ) )
-      
-    } else {
-      
-      clone.cols <- RColorBrewer::brewer.pal(n = length(clones), name = brewer.palette)
-      
-    }
+   clone.cols <- make_clone_col_input( clones, brewer.palette )
     
-    names(clone.cols) <- clones
+  } else {
+    
+    # if clone colours provided then make clone names into internal numeric clone names
+    clone.cols$clones <- clone_names[ match( clone.cols$clones, clone_names$orig ), "new" ]
     
   }
   
@@ -784,6 +777,30 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   ###########
   ### END ###
   ###########
+  
+}
+
+#' Function to create clone colour table with a RColourBrewer pallette
+#' 
+#' 
+#' @export
+make_clone_col_input <- function( clones, brewer.palette = "Paired" ){
+  
+  if( length(clones) > 8 ){ 
+    
+    # suppress warning - gets max number of colours from pallette - none have > 12 #
+    getPalette <- suppressWarnings( colorRampPalette( RColorBrewer::brewer.pal( 12, brewer.palette) ) ) # brewer.palette specified in arguments, default = "Paired"
+    clone.cols <- getPalette( length( clones ) )
+    
+  } else {
+    
+    clone.cols <- RColorBrewer::brewer.pal(n = length(clones), name = brewer.palette)
+    
+  }
+  
+  names(clone.cols) <- clones
+  
+  return( clone.cols )
   
 }
 
