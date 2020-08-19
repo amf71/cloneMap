@@ -80,7 +80,7 @@ clone_colours_example <- c( "#B15928", "#DDD399", "#9471B4", "#ED8F47", "#FDB762
 names(clone_colours_example) <- clone.names
 ```
 
-Additional a function is prvided to make clone colour input objects using a specified RColourBrewer pallete (default = "Paired" palette)
+Additionally a function is provided to make clone colour input objects using a specified RColourBrewer pallete (default = "Paired" palette)
 
 ```R
 clone.names <- unique( c( tree_example[,1], tree_example[,2] ) )
