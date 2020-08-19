@@ -85,7 +85,7 @@ Additionally a function is provided to make clone colour input objects using a s
 ```R
 clone.names <- unique( c( tree_example[,1], tree_example[,2] ) )
 
-clone_colours_example <- make_clone_col_input( clone.names )
+clone_colours_example_2 <- make_clone_col_input( clone.names )
 ```
 
 ### Plot examples
