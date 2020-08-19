@@ -139,9 +139,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
     # check class is correct (ie is it expected output from this function) #
     if( ! class(clone_map) == "Clone map" ) stop( "incorrect raster input" )
-    tree.mat <- clone_map$tree
+    tree.mat <- clone_map$tree_internal
     clone_names <- clone_map$names_match
-    CCF.data <- clone_map$CCFs
 
   } else {
   
@@ -479,6 +478,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           } else {
             
             max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))
+            
+            if( max_dist_i > length(nucleus.options.sel) ) browser() #TESTING
+            
             nuclei <- nucleus.options.sel[[ max_dist_i ]]
             nuclei_min_distance <-  nucleus.options.min.dists[[ max_dist_i ]]
             
@@ -703,10 +705,19 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
       
+      # convert clone names back to original
+      CCF.data.orig <- CCF.data
+      tree.orig <- tree.mat
+      
+      CCF.data.orig$clones <- clone_names[ match( CCF.data.orig$clones, clone_names$new ), "orig" ]
+      tree.orig[, 1] <- clone_names[ match( tree.orig[, 1], clone_names$new ), "orig" ]
+      tree.orig[, 2] <- clone_names[ match( tree.orig[, 2], clone_names$new ), "orig" ]
+      
       clones_rasterised <- list( clone_matrix = clones_rasterised_plot, 
-                                 tree = tree.mat, 
+                                 tree_internal = tree.mat, 
                                  names_match = clone_names,
-                                 CCFs = CCF.data )
+                                 CCFs = CCF.data.orig,
+                                 tree = tree.orig )
       
       class(clones_rasterised) <- "Clone map"
       
@@ -728,12 +739,12 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
     # already extracted tree from raster data object #
     
-    #extract all cloness to the plot from the tree (some f these may have been overtaken in raster plot) #
-    #ensure they arre in correct order - tree will be rodered trrunk -> branches -> leaves
+    #extract all clones to the plot from the tree (some f these may have been overtaken in raster plot) #
+    #ensure they are in correct order - tree will be ordered trunk -> branches -> leaves
     clones <- unique( c(tree.mat[,1], tree.mat[, 2]) )
     
     # simulate what occurs when plotting & raster generated concurrently #
-    # for each clone in the tree (trunk -> leaves) plots the area this occupies indluing all its daughters #
+    # for each clone in the tree (trunk -> leaves) plots the area this occupies incluing all its daughters #
     
     clones_rasterised_blank <- clones_rasterised
     clones_rasterised_blank[] <- 0 
@@ -776,8 +787,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       # plot the clone #
       plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == clone}, dissolve = TRUE))
-      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par speicified in arguemnts
-      raster::plot(plot.smooth, col = clone.cols[ names(clone.cols) == clone ], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguemnts and col can be specified in arguments
+      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par specified in arguments
+      raster::plot(plot.smooth, col = clone.cols[ names(clone.cols) == clone ], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguments and colour can be specified in arguments
       
     }
     
