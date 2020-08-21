@@ -16,8 +16,8 @@ make.CCFs.tree.consistant(
 \arguments{
 \item{tree.mat}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
 
-\item{CCF.data}{a table of clone CCFs with column 1 (named 'clone') specfying clone names and 
-column 2 (name 'CCF') specifying CCFs as either fractions or percetnages}
+\item{CCF.data}{a table of clone CCFs with column 1 (named 'clone') specifying clone names and 
+column 2 (name 'CCF') specifying CCFs as either fractions or percentages}
 
 \item{warning.limit}{If CCF of daughters is significantly > than the parent this may indicate the tree is 
 incorrect. This parameter specified the ratio of daughter : parent CCFs that will trigger a warning. Default 

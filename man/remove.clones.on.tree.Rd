@@ -2,16 +2,16 @@
 % Please edit documentation in R/cloneMap.R
 \name{remove.clones.on.tree}
 \alias{remove.clones.on.tree}
-\title{function to remove clones from a phenogenetic tree matrix}
+\title{function to remove clones from a phylogenetic tree matrix}
 \usage{
 remove.clones.on.tree(tree, clones.to.remove = NA, clones.to.keep = NA)
 }
 \arguments{
-\item{tree}{a phylogenetic tree matrix with two column specfying 'parent' (column 1) and child (column 2)}
+\item{tree}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
 
 \item{clones.to.remove}{a vector of clones which you wish to remove from the tree}
 
-\item{clones.to.keep}{a vector of clones which you wish to keep ie rmove all other clones from the tree}
+\item{clones.to.keep}{a vector of clones which you wish to keep i.e. remove all other clones from the tree}
 }
 \description{
 This maintains parent -> daughter relationships,  even if an intermediate

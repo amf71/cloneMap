@@ -7,7 +7,7 @@
 logically.order.tree(tree)
 }
 \arguments{
-\item{tree}{a phylogenetic tree matrix with two column specfying 'parent' (column 1) and child (column 2)}
+\item{tree}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
 }
 \description{
 function to order tree root -> branches -> leaves

@@ -163,7 +163,6 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
                                       each row indicating a parent (column 1) and corresponding 
                                       child (column 2' )
   
-  }
 
   ## Modify to internal, numeric clone names ##
   
@@ -179,6 +178,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   tree.mat[, 1] <- clone_names[ match( tree.mat[, 1], clone_names$orig ), "new" ]
   tree.mat[, 2] <- clone_names[ match( tree.mat[, 2], clone_names$orig ), "new" ]
   
+  }
   
   ## Get colours for plotting if these are not provided ##
   
