@@ -2,7 +2,7 @@
 % Please edit documentation in R/cloneMap.R
 \name{make.CCFs.tree.consistant}
 \alias{make.CCFs.tree.consistant}
-\title{Function to correct CCFs when sum of daughters CCF > parent CCF}
+\title{Function to correct CCFs when sum of daughter CCFs > parent CCF}
 \usage{
 make.CCFs.tree.consistant(
   tree.mat,
@@ -13,6 +13,25 @@ make.CCFs.tree.consistant(
   increase.parents = FALSE
 )
 }
+\arguments{
+\item{tree.mat}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
+
+\item{CCF.data}{a table of clone CCFs with column 1 (named 'clone') specfying clone names and 
+column 2 (name 'CCF') specifying CCFs as either fractions or percetnages}
+
+\item{warning.limit}{If CCF of daughters is significantly > than the parent this may indicate the tree is 
+incorrect. This parameter specified the ratio of daughter : parent CCFs that will trigger a warning. Default 
+is set to 1 hence any parent  with daughters > its CCF will trigger a warning (indicating how much greater 
+the daughter CCF is than the parent)}
+
+\item{parent.adjust}{what fraction of parent to increase daughters to, default is 1}
+
+\item{decrease.daughters}{Do you want to decrease the daughter CCF to account for instances where daughter 
+CCF > parent CCF}
+
+\item{increase.parents}{Do you want to increase the parent CCF to account for instances where daughter 
+CCF > parent CCF}
+}
 \description{
-Function to correct CCFs when sum of daughters CCF > parent CCF
+Function to correct CCFs when sum of daughter CCFs > parent CCF
 }

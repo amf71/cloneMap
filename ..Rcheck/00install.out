@@ -1,0 +1,12 @@
+* installing *source* package ‘cloneMap’ ...
+** using staged installation
+** R
+** data
+*** moving datasets to lazyload DB
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+mv: rename /Volumes/proj-tracerx-lung/tctProjects/frankella/R_packages/cloneMaps/..Rcheck/00LOCK-cloneMaps/00new/cloneMap to /Volumes/proj-tracerx-lung/tctProjects/frankella/R_packages/cloneMaps/..Rcheck/cloneMap: Permission denied
+ERROR:   moving to final location failed

@@ -6,6 +6,11 @@
 \usage{
 make_clone_col_input(clones, brewer.palette = "Paired")
 }
+\arguments{
+\item{clones}{a vector of clone names for colours to be assigned to}
+
+\item{brewer.palette}{a discrete brewer palette to be used for the colours (default is 'Paired')}
+}
 \description{
 Function to create clone colour table with a RColourBrewer palette
 }

@@ -17,7 +17,7 @@ for( file in example_files ) load( paste0("data/", file) )
 
 png( "data-raw/test_outputs/example_1.png" )
 
-cloneMap( tree_example_1, CCFs_example_1, border.thickness = 3, high_qualty_mode = T )
+cloneMap( tree_example_1, CCFs_example_1, border.thickness = 3 )
 
 invisible( dev.off() )
 
@@ -72,12 +72,12 @@ invisible( dev.off() )
 
 
 
-# for testing min function line by line
+# for testing
 
-# tree.mat = NA; CCF.data = NA; clone_map = NA; output.Clone.map.obj = FALSE;
-# plot.data = TRUE; high_qualty_mode = FALSE; track = NA; brewer.palette = "Paired";
-# clone.cols = NA; border.colour = "grey20";  border.thickness = 1.5;
-# resolution.index = 100;  smoothing.par = 10; repeat.limit = 4
-# 
+tree.mat = NA; CCF.data = NA; clone_map = NA; output.Clone.map.obj = FALSE;
+plot.data = TRUE; high_qualty_mode = FALSE; track = NA; brewer.palette = "Paired";
+clone.cols = NA; border.colour = "grey20";  border.thickness = 1.5;
+resolution.index = 100;  smoothing.par = 10; repeat.limit = 4
+
 
 

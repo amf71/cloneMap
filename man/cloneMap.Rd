@@ -96,21 +96,22 @@ between clones
 \examples{
 # example objects provided in env after loading package #
 
-cloneMap( tree_example, CCFs_example )
-cloneMap( tree_example, CCFs_simple_example ) 
+cloneMap( tree_example, CCFs_example_1 )
+cloneMap( tree_example, CCFs_example_2 ) 
 
 
 # Use a clone_map object to  plot cloneMap reproducably #
 
-clone_map_eg <- cloneMap( tree_example, CCFs_example, output.Clone.map.obj = TRUE, plot.data = FALSE )
+clone_map_eg <- cloneMap( tree_example, CCFs_example_2, 
+                          output.Clone.map.obj = TRUE, plot.data = FALSE )
 cloneMap( clone_map = clone_map_eg )
 
 
 # specify colours #
 # plot two samples from the same tumour so the clone colours match #
 
-cloneMap( tree_example, CCFs_simple_example, clone.cols = clone_colours_example )
-cloneMap( tree_example, CCFs_example, clone.cols = clone_colours_example )
+cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example )
+cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example )
 
 }
 \author{
