@@ -1208,15 +1208,15 @@ continuous.test <- function( clone_position ){
   
   
   # get surrounding cords coordinates for each coord #
-  coords.surrounding.id.list <- parallel::lapply( coords.list, function(coord) c( paste( coord$x + 1, coord$y, sep = "_" ),
-                                                                          paste( coord$x - 1, coord$y, sep = "_" ),
-                                                                          paste( coord$x, coord$y + 1, sep = "_" ),
-                                                                          paste( coord$x, coord$y - 1, sep = "_" ),
-                                                                          # diagonals # 
-                                                                          paste( coord$x + 1, coord$y - 1, sep = "_" ),
-                                                                          paste( coord$x + 1, coord$y + 1, sep = "_" ),
-                                                                          paste( coord$x - 1, coord$y - 1, sep = "_" ),
-                                                                          paste( coord$x - 1, coord$y + 1, sep = "_" ) ) )
+  coords.surrounding.id.list <- lapply( coords.list, function(coord) c( paste( coord$x + 1, coord$y, sep = "_" ),
+                                                                        paste( coord$x - 1, coord$y, sep = "_" ),
+                                                                        paste( coord$x, coord$y + 1, sep = "_" ),
+                                                                        paste( coord$x, coord$y - 1, sep = "_" ),
+                                                                        # diagonals # 
+                                                                        paste( coord$x + 1, coord$y - 1, sep = "_" ),
+                                                                        paste( coord$x + 1, coord$y + 1, sep = "_" ),
+                                                                        paste( coord$x - 1, coord$y - 1, sep = "_" ),
+                                                                        paste( coord$x - 1, coord$y + 1, sep = "_" ) ) )
   
   
   # choose a position in clone at random #
