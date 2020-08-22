@@ -4,7 +4,7 @@ Version: 1.0.0.0
 Date: 2020-08-22
 Author: Alexander M Frankell <alexander.frankell@crick.ac.uk>
 Authors@R: 
-    person(given = "Alexander",
+    person(given = "Alexander M",
            family = "Frankell",
            role = "cre",
            email = "alexander.frankell@crick.ac.uk",
