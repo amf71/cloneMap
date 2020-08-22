@@ -114,7 +114,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
                        resolution.index = 100,  smoothing.par = 10, repeat.limit = 4 ){
   
-  # work out whther to track function in detail #
+  # work out whether to track function in detail #
   if( high_qualty_mode & is.na( track )) track <- TRUE
   if( !high_qualty_mode & is.na( track )) track <- FALSE
 
@@ -136,7 +136,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   if( clone_map_data_supplied ){
     
     # check class is correct (ie is it expected output from this function) #
-    if( ! class(clone_map) == "Clone map" ) stop( "incorrect raster input" )
+    if( ! all(class(clone_map) == "Clone map") ) stop( "incorrect raster input" )
     tree.mat <- clone_map$tree_internal
     clone_names <- clone_map$names_match
 
@@ -152,9 +152,6 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   # check CCF.data has got data in
   if( nrow(CCF.data) == 0 ) stop( "please provide data in CCF.data. No rows detected." )
   
-  # Need to deal with numeric clone names for the matrix rasterisation #
-  # create a conversion table
-  
   # ensure tree data is a matrix
   tree.mat <- as.matrix(tree.mat)
   
@@ -167,16 +164,16 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   ## Modify to internal, numeric clone names ##
   
   # Need numeric clones names for raster matrix. 
-  # Change a match table and modify the tree and CCF table clone names
+  # Make a match table and modify the tree and CCF table clone names
 
   orig_names <- unique( c(tree.mat[,1],  tree.mat[,2], CCF.data$clones ) )
   clone_names <- data.frame( orig = orig_names,
-                             new = 1:length(orig_names))
+                             internal = 1:length(orig_names))
   
   #now convert the clone names in the CCF table and tree
-  CCF.data$clones <- clone_names[ match( CCF.data$clones, clone_names$orig ), "new" ]
-  tree.mat[, 1] <- clone_names[ match( tree.mat[, 1], clone_names$orig ), "new" ]
-  tree.mat[, 2] <- clone_names[ match( tree.mat[, 2], clone_names$orig ), "new" ]
+  CCF.data$clones <- clone_names[ match( CCF.data$clones, clone_names$orig ), "internal" ]
+  tree.mat[, 1] <- clone_names[ match( tree.mat[, 1], clone_names$orig ), "internal" ]
+  tree.mat[, 2] <- clone_names[ match( tree.mat[, 2], clone_names$orig ), "internal" ]
   
   }
   
@@ -199,7 +196,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
   } else {
     
     # if clone colours provided then make clone names into internal numeric clone names
-    names(clone.cols) <- clone_names[ match( names(clone.cols), clone_names$orig ), "new" ]
+    names(clone.cols) <- clone_names[ match( names(clone.cols), clone_names$orig ), "internal" ]
     
   }
   
@@ -326,7 +323,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       raster::plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
       
       ## plot the clonal clone ##
-      plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == root}, dissolve = TRUE) )
+      # message suppressed for rgeos package loading #
+      plot <- suppressMessages( sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == root}, dissolve = TRUE) ) )
       
       # add smoothing to make it more visually appealing #
       # note: smoothing will make the plotted area slightly underestimate the true area but by only very little #
@@ -719,9 +717,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       CCF.data.orig <- CCF.data
       tree.orig <- tree.mat
       
-      CCF.data.orig$clones <- clone_names[ match( CCF.data.orig$clones, clone_names$new ), "orig" ]
-      tree.orig[, 1] <- clone_names[ match( tree.orig[, 1], clone_names$new ), "orig" ]
-      tree.orig[, 2] <- clone_names[ match( tree.orig[, 2], clone_names$new ), "orig" ]
+      CCF.data.orig$clones <- clone_names[ match( CCF.data.orig$clones, clone_names$internal ), "orig" ]
+      tree.orig[, 1] <- clone_names[ match( tree.orig[, 1], clone_names$internal ), "orig" ]
+      tree.orig[, 2] <- clone_names[ match( tree.orig[, 2], clone_names$internal ), "orig" ]
       
       clones_rasterised <- list( clone_matrix = clones_rasterised_plot, 
                                  tree_internal = tree.mat, 
@@ -994,7 +992,7 @@ logically.order.tree <- function(tree){
   }
   tree <- tree[order(levels),]
   
-  if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree, ncol = 2, byrow = TRUE)
+  if( any(class(tree)=="character") | any( class(tree)=="numeric") ) tree <- matrix(tree, ncol = 2, byrow = TRUE)
   
   return(tree)
   
@@ -1066,7 +1064,7 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
       tree <- rbind(tree, matrix(c(rep(parent,length(daughters)),daughters),ncol = 2))
     }
     tree <- tree[!(tree[, 1]==clone | tree[, 2]==clone),]
-    if(class(tree)=="character" | class(tree)=="numeric") tree <- matrix(tree, ncol = 2, byrow = TRUE)
+    if(any(class(tree)=="character") | any( class(tree)=="numeric")) tree <- matrix(tree, ncol = 2, byrow = TRUE)
   }
   
   # return pruned tree #
@@ -1183,11 +1181,11 @@ matrix.index.to.coordinates <- function( matrix.index, nrow, ncol ){
 
 coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
   
-  if(class(coordinates)=="numeric"){
+  if( any(class(coordinates)=="numeric") ){
     return( ( ( coordinates[1] - 1 ) * ncol ) + coordinates[2] )
   }
   
-  if(class(coordinates)=="data.frame"){
+  if( any(class(coordinates)=="data.frame") ){
     return( ( ( coordinates$x - 1 ) * ncol ) + coordinates$y )
   }
   
