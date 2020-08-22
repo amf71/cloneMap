@@ -2,6 +2,7 @@ Package: cloneMap
 Title: A Package to Construct Visual Pepresentations of the Spatial Distribution of Somatic Clones in a Tissue / Sample   
 Version: 1.0.0.0
 Date: 2020-08-22
+Author: Alexander M Frankell <alexander.frankell@crick.ac.uk>
 Author@R: 
     person(given = "Alexander",
            family = "Frankell",
