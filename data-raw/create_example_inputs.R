@@ -38,6 +38,22 @@ tree_example <-   matrix( c(1, 2,
                             6, 10 ), ncol = 2, byrow = TRUE )
 
 
+# example tree and CCF table for normal tissue data - polyclonal no trunk
+tree_example_poly <-   matrix( c(1, 1,
+                                 2, 2,
+                                 3, 4,
+                                 3, 5,
+                                 4, 6,
+                                 7, 8,
+                                 9, 9,
+                                 10, 10), ncol = 2, byrow = TRUE )
+
+CCF_example_poly <- data.frame( clones = c( 1,   2,    3,   4,    5,    6,    7,    8,    9,   10 ), 
+                                CCF    = c( 0.4, 0.3, 1, 0.2, 0.25, 0.05,  0.1,  0.05, 0.1,  0.05 ), 
+                                stringsAsFactors = F )
+
+
+
 # get all the clone names we want to plot #
 clone.names <- unique( c( tree_example[,1], tree_example[,2] ) )
 
@@ -63,6 +79,8 @@ usethis::use_data( tree_example_1, overwrite = TRUE )
 usethis::use_data( tree_example_2, overwrite = TRUE )
 usethis::use_data( tree_example, overwrite = TRUE )
 usethis::use_data( clone_colours_example, overwrite = TRUE)
+usethis::use_data( tree_example_poly, overwrite = TRUE )
+usethis::use_data( CCF_example_poly, overwrite = TRUE)
 
 
 # clear env and install package again to update example data #
@@ -129,6 +147,16 @@ text(0.5, 0.5, labels = "Tumour 1: Sample 2", cex = 3, font = 2)
 cloneMap( tree_example_1, CCFs_example_1, clone.cols = clone_colours_example, border.thickness = 3 )
 
 cloneMap( tree_example_2, CCFs_example_2, clone.cols = clone_colours_example, border.thickness = 3 )
+
+invisible( dev.off() )
+
+
+
+# plot maps of polyclonal data similar to that found in normal tissues
+
+png( "data-raw/example_outputs/example_polyclonal.png", width = 800 )
+
+cloneMap( tree.mat = tree_example_poly, CCF.data = CCF_example_poly )
 
 invisible( dev.off() )
 

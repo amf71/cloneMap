@@ -17,7 +17,7 @@ for( file in example_files ) load( paste0("data/", file) )
 
 png( "data-raw/test_outputs/example_1.png" )
 
-cloneMap( tree_example_1, CCFs_example_1, border.thickness = 3, high_qualty_mode = T )
+cloneMap( tree.mat = tree_example_1, CCF.data = CCFs_example_1, border.thickness = 3 )
 
 invisible( dev.off() )
 
