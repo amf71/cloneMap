@@ -46,10 +46,14 @@ tree_example_poly <-   matrix( c(1, 1,
                                  4, 6,
                                  7, 8,
                                  9, 9,
-                                 10, 10), ncol = 2, byrow = TRUE )
+                                 10, 10,
+                                 11, 11,
+                                 12, 12,
+                                 13, 13,
+                                 14, 14), ncol = 2, byrow = TRUE )
 
-CCF_example_poly <- data.frame( clones = c( 1,   2,    3,   4,    5,    6,    7,    8,    9,   10 ), 
-                                CCF    = c( 0.4, 0.3, 1, 0.2, 0.25, 0.05,  0.1,  0.05, 0.1,  0.05 ), 
+CCF_example_poly <- data.frame( clones = c( 1,   2,    3,   4,    5,    6,    7,    8,    9,   10,     11,   12,    13,   14 ), 
+                                CCF    = c( 0.03, 0.05, 0.2, 0.1, 0.02, 0.05,  0.1,  0.05, 0.1, 0.05, 0.02, 0.02, 0.05, 0.03 ), 
                                 stringsAsFactors = F )
 
 
@@ -156,7 +160,29 @@ invisible( dev.off() )
 
 png( "data-raw/example_outputs/example_polyclonal.png", width = 800 )
 
-cloneMap( tree.mat = tree_example_poly, CCF.data = CCF_example_poly )
+cloneMap( tree.mat = tree_example_poly, 
+          CCF.data = CCF_example_poly )
+
+invisible( dev.off() )
+
+# plot maps of polyclonal data similar to that found in normal tissues with border
+
+png( "data-raw/example_outputs/example_polyclonal_border.png", width = 800 )
+
+cloneMap( tree.mat = tree_example_poly, 
+          CCF.data = CCF_example_poly,
+          tissue_border = TRUE)
+
+invisible( dev.off() )
+
+# plot maps of polyclonal data similar to that found in normal tissues with border
+
+png( "data-raw/example_outputs/example_polyclonal_spaced.png", width = 800 )
+
+cloneMap( tree.mat = tree_example_poly, 
+          CCF.data = CCF_example_poly,
+          tissue_border = TRUE,
+          space_fraction = 0.7 )
 
 invisible( dev.off() )
 

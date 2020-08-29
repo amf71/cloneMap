@@ -80,3 +80,29 @@
 #' }
 #'
 'tree_example_2'
+
+
+#' The a phylogenetic tree with all subclones in a polyclonal CCF example
+#'
+#' A table specifying phylogentic relationships between clones
+#'
+#' @format A data frame with 3 rows and 2 variables:
+#' \describe{
+#'  \item{parent}{name of parent clone}
+#'  \item{daughter}{name of daughter clone}
+#' }
+#'
+'tree_example_poly'
+
+#' A polyclonal example CCF table 
+#'
+#' A table specifying the Cancer cell fractions (CCFs) of clones
+#' which you wish to plot
+#'
+#' @format A data frame with 4 rows and 2 variables:
+#' \describe{
+#'  \item{clones}{names of clones}
+#'  \item{CCF}{the cancer cell fraction (CCF) of specified clones}
+#' }
+#'
+'CCFs_example_poly'
