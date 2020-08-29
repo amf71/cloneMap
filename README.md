@@ -14,7 +14,7 @@ You can use devtools::install_github() to install cloneMap from this repository:
 `devtools::install_github("amf71/cloneMap")`
 
 
-## Usage examples
+## Usage examples - rooted trees
 
 load package:
 
@@ -126,4 +126,83 @@ cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example )
 ```
 
 ![example4](data-raw/example_outputs/example_4.png)
+
+
+## Usage examples - unrooted trees
+
+cloneMaps will also plot unrooted trees - i.e. where some clones are not related to each other. This
+is common in data derived from normal tissues, rather than tumours, which are dominated by small unrelated
+clones. 
+
+If a clone has no parents or daughters it is specified as *clone name* (parent) -> *clone name* (child)
+as for clones 1, 2, 9, 10, 11, 12, 13 and 14 in the example below. 
+
+
+### Example data
+
+Example CCF table for unrooted data
+
+```R
+CCF_example_poly <- data.frame( clones = c( 1,   2,    3,   4,    5,    6,    7,    8,    9,   10,     11,   12,    13,   14 ), 
+                                CCF    = c( 0.03, 0.05, 0.2, 0.1, 0.02, 0.05,  0.1,  0.05, 0.1, 0.05, 0.02, 0.02, 0.05, 0.03 ), 
+                                stringsAsFactors = F )
+```
+
+Example tree matrix for unrooted data. Each relationship is specified as a row, the parent as the first column and child as the second    
+
+```R
+tree_example_poly <-   matrix( c(1, 1,
+                                 2, 2,
+                                 3, 4,
+                                 3, 5,
+                                 4, 6,
+                                 7, 8,
+                                 9, 9,
+                                 10, 10,
+                                 11, 11,
+                                 12, 12,
+                                 13, 13,
+                                 14, 14), ncol = 2, byrow = TRUE )
+
+``` 
+
+### Plot examples
+
+
+plot map of polyclonal data similar to that found in normal tissues
+
+```R
+cloneMap( tree.mat = tree_example_poly, 
+          CCF.data = CCF_example_poly )
+```
+          
+![example_polyclonal](data-raw/example_outputs/example_polyclonal.png)
+
+
+plot map of polyclonal data similar to that found in normal tissues with border around
+the plot area. This makes clearer the % of the tissue containing mutant clones. 
+
+```R
+cloneMap( tree.mat = tree_example_poly, 
+          CCF.data = CCF_example_poly,
+          tissue_border = TRUE)
+```
+
+![example_polyclonal border](data-raw/example_outputs/example_polyclonal_border.png)
+
+
+plot map of polyclonal data similar to that found in normal tissues with border with sparsely 
+spaced clones. Here `space_fraction` indicates that 70% of the plot area should be white space
+indicating that only 70% of cells are wildtype. 
+
+```R
+cloneMap( tree.mat = tree_example_poly, 
+          CCF.data = CCF_example_poly,
+          tissue_border = TRUE,
+          space_fraction = 0.7 )
+```
+       
+![example_polyclonal spaced](data-raw/example_outputs/example_polyclonal_spaced.png)
+
+
 
