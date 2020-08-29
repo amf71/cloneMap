@@ -188,7 +188,7 @@ cloneMap( tree.mat = tree_example_poly,
           tissue_border = TRUE)
 ```
 
-![example_polyclonal](data-raw/example_outputs/example_polyclonal_border.png)
+![example_polyclonal border](data-raw/example_outputs/example_polyclonal_border.png)
 
 
 plot map of polyclonal data similar to that found in normal tissues with border with sparsely 
@@ -202,7 +202,7 @@ cloneMap( tree.mat = tree_example_poly,
           space_fraction = 0.7 )
 ```
        
-![example_polyclonal](data-raw/example_outputs/example_polyclonal_spaced.png)
+![example_polyclonal spaced](data-raw/example_outputs/example_polyclonal_spaced.png)
 
 
 
