@@ -21,7 +21,8 @@ Imports:
 	raster,
 	RColorBrewer,
 	rgeos,
-	grDevices
+	grDevices,
+	vegan
 RoxygenNote: 7.1.1
 URL: https://github.com/amf71/cloneMap
 BugReports: https://github.com/amf71/cloneMap/issues

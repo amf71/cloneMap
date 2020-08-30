@@ -938,7 +938,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
                                  tree_internal = tree.mat, 
                                  names_match = clone_names,
                                  CCFs = CCF.data.orig,
-                                 tree = tree.orig )
+                                 tree = tree.orig,
+                                 shannon_diversity = calc_clonal_diversity( CCF.data.orig, tree.orig, method = 'shannon' ),
+                                 simpson_diversity = calc_clonal_diversity( CCF.data.orig, tree.orig, method = 'simpson' ))
       
       class(clones_rasterised) <- "Clone map"
       
@@ -1238,6 +1240,77 @@ logically.order.tree <- function( tree ){
   
 }
 
+
+#' function to calculate shannon or simpson diversity of clonal 
+#' prevalence from CCF table input
+#'
+#' clonal prevalence indicates, for each clone,
+#' what percentage of cells actually contain its
+#' precise genotype (i.e. do not also have any other
+#' additional mutations in subclones). Prevalence
+#'  for all clones should sum 100% in a rooted tree.
+#' 
+#' @param CCF.data a table of clone CCFs with column 1 (named 'clone') specifying clone names and 
+#' column 2 (name 'CCF') specifying CCFs as either fractions or percentages
+#' 
+#' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
+#' 
+#' @param method which method of diversity calculation should be used. These are borrows from the `diversity` 
+#' function of the `vegan` package and can be "shannon", "simpson" or "invsimpson"
+#' 
+calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon' ){
+  
+  tree <- suppressMessages( logically.order.tree( tree ) )
+  
+  parents_with_subclones <- unique( tree[ !tree[, 1] == tree[, 2], 1] )
+  
+  CCF.data$prevelence <- CCF.data$CCF
+  
+  for(clone in parents_with_subclones){
+    
+    # get CCF of all daughters
+    # first get all daughters
+    daughters <- extract_daughters( tree, clone )
+    
+    # sum the ccf
+    daughter_ccf <- sum( CCF.data[ CCF.data$clones %in% daughters, "CCF" ] )
+    
+    # remove this ccf from the parent to leave only the number of cells
+    # with exactly the parent genotype
+    parent_CCF <- CCF.data[ CCF.data$clones == clone, "CCF" ]
+    
+    parent_prevelence <- parent_CCF - daughter_ccf
+    
+    CCF.data[ CCF.data$clones == clone, "prevelence" ] <- parent_prevelence
+    
+  }
+  
+  diversity <- vegan::diversity( CCF.data$prevelence, index = method )
+  
+  return( diversity )
+  
+}
+
+#' function to extract all daughter clones from a parent using a phylogenetic tree
+#'
+#' @param parent.clones the name of the parent clone(s) for which you wish to find all daughters
+#' 
+#' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
+#' 
+extract_daughters <- function( tree, parent.clones ){
+  
+  daughters <- unique( c(tree[ tree[,1] %in% parent.clones, 2], parent.clones) )
+  repeat{
+    all.daughters <- unique( c( daughters, tree[ tree[,1] %in% daughters, 2] ) )
+    if( all(all.daughters %in% daughters ) ) break
+    daughters <- all.daughters
+  }
+  
+  daughters <- daughters[  !daughters %in% parent.clones ]
+  
+  return( daughters )
+  
+}
 
 #' function to find the root(s) in a phylogenetic tree
 #' 
