@@ -336,6 +336,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       # make everything outside this area = 1000 indicating clones cannot grow here
       clones_rasterised[ dist.mat < distance_cutoff ] <- 1000
       
+      # if specified in arguments add a border around the plot area
       if( tissue_border == TRUE ){
         
         # ensure raster is class numeric not char #
@@ -364,21 +365,33 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       # CCFs now become arbitrary - don't let it take up > 70% of plot size #
       total.CCF <- sum( CCF.data[ CCF.data$clones %in% root, "CCF" ] )
       
+      # determine how much white space should be in the plot i.e. how dense are the clones?
       if( is.na(space_fraction) ){
         
+        # if space_fraction is NA (default) then allow this to be determined by the CCFs. i.e.
+        # if CCFs of the roots add up to 60% then the plot will be 40% white space. Limit this
+        # to at least 30% white space however
         if( total.CCF < 100 ) total.CCF <- 100
         CCF.data$area <- signif( (CCF.data$CCF / total.CCF) * ( plot.area * 0.70 ), digits = 4 )
         
       } else { 
         
+        #or if space_fraction is specified then produce exactly with amount of white space
         CCF.data$area <- signif( (CCF.data$CCF / total.CCF) * ( plot.area * (1 - space_fraction) ), digits = 4 )
         
       }
-
+      
+      # signpost #
+      message( "determining root clone nuclei...")
+      
+      # get options for nucleation of clones. Restrict to not too close to centre or to border
       nucleus.options <- dist.mat > (distance_cutoff * 0.20) & dist.mat < (distance_cutoff * 0.80) & clones_rasterised == 1000
       
+      # determine number fo nuclei to sample when choosing. The more sampled the better chance of choosing
+      # nuclei very far apart which looks neater. The great the number of root clones the more important this
+      # is hence increase the numbe sampled. However calulating the spacing of nulceo is very computationally 
+      # expensive and this will signifcanly increase runtime
       nuclei_sample_number <- 20
-      
       if( length(root) > 2 )  nuclei_sample_number <- 50
       if( length(root) > 5 )  nuclei_sample_number <- 200
       
@@ -406,18 +419,22 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         return( min( mindist ) )
       } )
       
+      # select the set of nuclei with the maximum distance
       max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))
       nuclei <- nucleus.options.sel[[ max_dist_i ]]
       
       nuclei <- lapply( 1:nrow(nuclei), function(x) as.numeric( nuclei[x, ] ) )
       names(nuclei) <- root
       
+      # get distance matricies for each nuclei
       nuclei.dists <- lapply( 1:length( nuclei ), function(i) make.distance.matrix( clones_rasterised, nucleus = nuclei[[i]] ) ) ## make.distance.matrix function specified below
       names( nuclei.dists ) <- root
       
+      # get desired areas for each root clone
       clone.areas <- sapply(root, function(clone) CCF.data[  CCF.data$clones == clone, "area" ])
       names(clone.areas) <- root
       
+      # determine how fast and from what to what sizes the clones should grow
       growth_rate <- resolution.index
       
       max_growth <- mceiling( max(clone.areas), growth_rate) ## function mceiling is below
@@ -448,6 +465,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         
       }
       
+      # grow the clones around each other within the plot area #
       for( area in growth.stages ){
         
         # for this round of growth determine area of expansion for each clone, limiting to area for this stage #
@@ -485,7 +503,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       # assign all other positions in plot to Inf ( now indicates no clones ) #
       dist.mat[ !dist.mat < distance_cutoff | clones_rasterised == 1000 ] <- Inf
-      
+    
+      # Record the distance matrices and final cut offs for each clones to be used when 
+      # growing their subclones
       parent.dists <- list()
       parent_distance_cutoffs <- c()
       
