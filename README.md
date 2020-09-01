@@ -7,20 +7,21 @@
 A function to map the distribution of somatic clones in sample or set of samples, accounting for the clone size(s), *ie* the Cancer Cell Fraction (CCF), and phylogenetic relationships between clones. Clone positions are semi-randomised in the plot while maintaining the two formally described factors.  
 
 
-## Installation
+## Installation & loading
 
 You can use devtools::install_github() to install cloneMap from this repository:
 
-`devtools::install_github("amf71/cloneMap")`
-
-
-## Usage examples - rooted trees
+```R
+devtools::install_github("amf71/cloneMap")`
+```
 
 load package:
 
 ```R
 library(cloneMap)
 ```
+
+## Usage examples - rooted trees
 
 ### Example data
 
@@ -140,6 +141,8 @@ as for clones 1, 2, 9, 10, 11, 12, 13 and 14 in the example below.
 
 ### Example data
 
+`tree_example_poly`, `CCF_example_poly` are loaded into the R environment (hidden) upon package loading and also are defined below:
+
 Example CCF table for unrooted data
 
 ```R
@@ -169,7 +172,7 @@ tree_example_poly <-   matrix( c(1, 1,
 ### Plot examples
 
 
-plot map of polyclonal data similar to that found in normal tissues
+Plot map of polyclonal data similar to that found in normal tissues.
 
 ```R
 cloneMap( tree.mat = tree_example_poly, 
@@ -179,7 +182,7 @@ cloneMap( tree.mat = tree_example_poly,
 ![example_polyclonal](data-raw/example_outputs/example_polyclonal.png)
 
 
-plot map of polyclonal data similar to that found in normal tissues with border around
+Plot map of polyclonal data similar to that found in normal tissues with border around
 the plot area. This makes clearer the % of the tissue containing mutant clones. 
 
 ```R
@@ -191,7 +194,7 @@ cloneMap( tree.mat = tree_example_poly,
 ![example_polyclonal border](data-raw/example_outputs/example_polyclonal_border.png)
 
 
-plot map of polyclonal data similar to that found in normal tissues with border with sparsely 
+Plot map of polyclonal data similar to that found in normal tissues with border with sparsely 
 spaced clones. Here `space_fraction` indicates that 70% of the plot area should be white space
 indicating that only 70% of cells are wildtype. 
 
