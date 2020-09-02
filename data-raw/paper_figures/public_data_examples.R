@@ -156,6 +156,41 @@ lung_trees <- lapply( lung_trees$SampleID, function(sample){
 names(lung_trees) <- samples
 
 
+# Data from normal liver Campbell et al Nature, available on mendeley data #
+
+data_loc <- 'https://data.mendeley.com/public-files/datasets/ktx7jp8sch/files/c6185ee3-d8f8-4590-b2e7-f9c624deaaab/file_downloaded'
+
+httr::GET(data_loc, httr::write_disk(tf <- tempfile(fileext = ".csv")))
+liver_data <- data.table::fread( tf ) 
+
+# in this data set use % of samples as a proxy to calculate CCF - true ccfs not provided #liverclust
+
+#remove mutations unassigned to cltuered
+liver_data <- liver_data[ !clust_id %in%  c("", "bulk") ]
+
+liver_data <- liver_data[, .(donor = unique(donor), is_cancer = unique(is_cancer) ), by = .(clust_id, sample)]
+
+liver_data[, samples_present := .N, by = clust_id ]
+liver_data[, num_samples := length( unique( sample ) ), by = donor ]
+liver_data[, ccf := samples_present / num_samples ]
+
+liver_ccfs <- liver_data[, .(ccf = unique(ccf)), by = .(donor, clust_id)]
+
+# remove the sample identifiers on clone names
+liver_ccfs[, clust_id := sapply(strsplit( clust_id, split = "_" ), function(x) x[2] ) ]
+liver_data[, clust_id := sapply(strsplit( clust_id, split = "_" ), function(x) x[2] ) ]
+
+# now work out the tree relationships
+liver_trees <- lapply( liver_data[, unique(donor) ], function( donor ){
+  
+  # first get all the clones without parents or daughters
+  
+  
+  
+  
+})
+
+
 ### All ccf data at region level, also calculate ccfs over all samples in a patient ###
  
 lung_ccfs[, patient_ccfs := mean( ccf ), by = .( SampleID, PyClonePhyloCluster )]

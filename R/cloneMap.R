@@ -128,7 +128,7 @@
 #' tissue_border = TRUE)
 #' 
 #' # Here space_fraction indicates that 70% of the plot area should be white space #
-#' # indicating that only 70% of cells are wild type. #
+#' # indicating that only 70% of cells are wild type.
 #' 
 #' cloneMap( tree.mat = tree_example_poly, 
 #' CCF.data = CCF_example_poly,
@@ -1337,7 +1337,8 @@ extract_daughters <- function( tree, parent.clones ){
 #' convention of this package
 #' 
 #' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
-#' 
+#'
+#' @export 
 find_root <- function( tree ){
   
   # the root is the only clone that's never a daughter  #
