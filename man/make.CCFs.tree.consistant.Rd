@@ -10,7 +10,8 @@ make.CCFs.tree.consistant(
   warning.limit = 1,
   parent.adjust = 1,
   decrease.daughters = TRUE,
-  increase.parents = FALSE
+  increase.parents = FALSE,
+  clone_names = NA
 )
 }
 \arguments{

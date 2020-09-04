@@ -105,4 +105,4 @@
 #'  \item{CCF}{the cancer cell fraction (CCF) of specified clones}
 #' }
 #'
-'CCFs_example_poly'
+'CCF_example_poly'

@@ -86,12 +86,11 @@ usethis::use_data( clone_colours_example, overwrite = TRUE)
 usethis::use_data( tree_example_poly, overwrite = TRUE )
 usethis::use_data( CCF_example_poly, overwrite = TRUE)
 
-
-# clear env and install package again to update example data #
-
-rm( ls() )
-
-devtools::install()
+# # clear env and install package again to update example data #
+# 
+# rm( ls() )
+# 
+# devtools::install()
 
 
 
@@ -104,7 +103,7 @@ library(cloneMap)
 
 png( "data-raw/example_outputs/example_1.png" )
 
-cloneMap( tree_example_1, CCFs_example_1, border.thickness = 3 )
+cloneMap::cloneMap( tree_example_1, CCFs_example_1, border.thickness = 3 )
 
 invisible( dev.off() )
 
@@ -113,18 +112,18 @@ invisible( dev.off() )
 
 png( "data-raw/example_outputs/example_2.png")
 
-cloneMap( tree_example_2, CCFs_example_2, border.thickness = 3 )
+cloneMap::cloneMap( tree_example_2, CCFs_example_2, border.thickness = 3 )
 
 invisible( dev.off() )
 
 
 # second example again using clone_map object #
 
-clone_map_eg <- cloneMap( tree_example_2, CCFs_example_2, output.Clone.map.obj = TRUE, plot.data = FALSE )
+clone_map_eg <- cloneMap::cloneMap( tree_example_2, CCFs_example_2, output.Clone.map.obj = TRUE, plot.data = FALSE )
 
 png( "data-raw/example_outputs/example_3.png" )
 
-cloneMap( clone_map = clone_map_eg, border.thickness = 3 )
+cloneMap::cloneMap( clone_map = clone_map_eg, border.thickness = 3 )
 
 invisible( dev.off() )
 
@@ -148,9 +147,9 @@ text(0.5, 0.5, labels = "Tumour 1: Sample 1", cex = 3, font = 2)
 plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
 text(0.5, 0.5, labels = "Tumour 1: Sample 2", cex = 3, font = 2)
 
-cloneMap( tree_example_1, CCFs_example_1, clone.cols = clone_colours_example, border.thickness = 3 )
+cloneMap::cloneMap( tree_example_1, CCFs_example_1, clone.cols = clone_colours_example, border.thickness = 3 )
 
-cloneMap( tree_example_2, CCFs_example_2, clone.cols = clone_colours_example, border.thickness = 3 )
+cloneMap::cloneMap( tree_example_2, CCFs_example_2, clone.cols = clone_colours_example, border.thickness = 3 )
 
 invisible( dev.off() )
 
@@ -160,8 +159,8 @@ invisible( dev.off() )
 
 png( "data-raw/example_outputs/example_polyclonal.png", width = 800 )
 
-cloneMap( tree.mat = tree_example_poly, 
-          CCF.data = CCF_example_poly )
+cloneMap::cloneMap( tree.mat = tree_example_poly, 
+                    CCF.data = CCF_example_poly )
 
 invisible( dev.off() )
 
@@ -169,9 +168,9 @@ invisible( dev.off() )
 
 png( "data-raw/example_outputs/example_polyclonal_border.png", width = 800 )
 
-cloneMap( tree.mat = tree_example_poly, 
-          CCF.data = CCF_example_poly,
-          tissue_border = TRUE)
+cloneMap::cloneMap( tree.mat = tree_example_poly, 
+                    CCF.data = CCF_example_poly,
+                    tissue_border = TRUE)
 
 invisible( dev.off() )
 
@@ -179,10 +178,10 @@ invisible( dev.off() )
 
 png( "data-raw/example_outputs/example_polyclonal_spaced.png", width = 800 )
 
-cloneMap( tree.mat = tree_example_poly, 
-          CCF.data = CCF_example_poly,
-          tissue_border = TRUE,
-          space_fraction = 0.7 )
+cloneMap::cloneMap( tree.mat = tree_example_poly, 
+                    CCF.data = CCF_example_poly,
+                    tissue_border = TRUE,
+                    space_fraction = 0.7 )
 
 invisible( dev.off() )
 

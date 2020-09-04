@@ -18,7 +18,9 @@ cloneMap(
   border.thickness = 1.5,
   resolution.index = 100,
   smoothing.par = 10,
-  repeat.limit = 4
+  repeat.limit = 4,
+  space_fraction = NA,
+  tissue_border = FALSE
 )
 }
 \arguments{
@@ -67,21 +69,31 @@ for each of several samples from the same tumour.}
 \item{border.thickness}{The thickness of the clone borders.}
 
 \item{resolution.index}{This indicates the resolution of the model representing clonal
-growth. More precisely it is the diameter of the rasterised matrix in which each piont
-represents a position where a clone can reside. A higher resultion index will allow more
+growth. More precisely it is the diameter of the rasterised matrix in which each point
+represents a position where a clone can reside. A higher resolution index will allow more
 precise positioning of clones but also increase running time.}
 
-\item{smoothing.par}{Smoothing parameter for the clones. Edges of the clones are smoothened
+\item{smoothing.par}{Smoothing parameter for the clones. Edges of the clones are smoothed
 for visual appeal. The higher this parameter the more smoothing will occur.}
 
 \item{repeat.limit}{When `high_qualty_mode` is TRUE the function will test each clone for 
-continuity (ie that there are not multiple islands or patches of the same clone) and if
-so it will plot this clone and all its sisters again to attempt to aviod this
-as clone postions are semi-randomly generated. The `repeat.limit` indicates the maximum number of 
+continuity (i.e. that there are not multiple islands or patches of the same clone) and if
+so it will plot this clone and all its sisters again to attempt to avoid this
+as clone positions are semi-randomly generated. The `repeat.limit` indicates the maximum number of 
 allowed repeats before the function will output a warning and continue with the plot.
-These repeats increase run time significantly when high_qualty_mode` is TRUE. After two 
-repeats the function will use various mechanisms to decrese the probability of non-contiinuous
+These repeats increase run time significantly when high_quality_mode` is TRUE. After two 
+repeats the function will use various mechanisms to decrease the probability of non-continuous
 clones even further but at the expense of even longer run times.}
+
+\item{space_fraction}{When an unrooted tree is provided how much much of the plot should be white space.
+White space indicates non-mutated tissue and hence the density of the clones. Default is NA in which case
+the amount of white space will be determined by the CCFs provided i.e. if all the root clone CCFs add up to
+60% then 40% of the plot is white space. This is limited however at 70% for athletics. When the 
+space fraction is specified the CCFs for an unrooted tree become relative to amount of non-white space
+which is available.}
+
+\item{tissue_border}{When a tree is unrooted, should a border be draw to make clear the edge of the tissue. 
+Default is FALSE.}
 }
 \value{
 A `clone_map` object will be returned if `output.Clone.map.obj` is TRUE
@@ -100,7 +112,7 @@ cloneMap( tree_example, CCFs_example_1 )
 cloneMap( tree_example, CCFs_example_2 ) 
 
 
-# Use a clone_map object to  plot cloneMap reproducably #
+# Use a clone_map object to  plot cloneMap reproducibility #
 
 clone_map_eg <- cloneMap( tree_example, CCFs_example_2, 
                           output.Clone.map.obj = TRUE, plot.data = FALSE )
@@ -112,6 +124,24 @@ cloneMap( clone_map = clone_map_eg )
 
 cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example )
 cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example )
+
+# Can also be used with tree containing unrelated clones i.e. unrooted trees #
+# such as is common is data derived from normal tissues: #
+
+cloneMap( tree.mat = tree_example_poly, 
+CCF.data = CCF_example_poly )
+
+cloneMap( tree.mat = tree_example_poly, 
+CCF.data = CCF_example_poly,
+tissue_border = TRUE)
+
+# Here space_fraction indicates that 70\% of the plot area should be white space #
+# indicating that only 70\% of cells are wild type.
+
+cloneMap( tree.mat = tree_example_poly, 
+CCF.data = CCF_example_poly,
+tissue_border = TRUE,
+space_fraction = 0.7 )
 
 }
 \author{

@@ -274,7 +274,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # If this occurs a warning will be outputted with how much smaller the parent CCF is than its children #
     # given noise in CCF calculations mean we can accept some underestimate of parent CCF but if children # 
     # > ~130% of parent this should be checked and tree/clones/CCFs may be incorrect                        #
-    CCF.data <- make.CCFs.tree.consistant( tree.mat = tree.mat, CCF.data = CCF.data )   ## Function specified below 
+    CCF.data <- make.CCFs.tree.consistant( tree.mat = tree.mat, 
+                                           CCF.data = CCF.data, 
+                                           clone_names = clone_names )   ## Function specified below 
     
     
     ######===============================================================######
@@ -1276,6 +1278,7 @@ logically.order.tree <- function( tree ){
 #' @param method which method of diversity calculation should be used. These are borrows from the `diversity` 
 #' function of the `vegan` package and can be "shannon", "simpson" or "invsimpson"
 #' 
+#' @export
 calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon' ){
   
   tree <- suppressMessages( logically.order.tree( tree ) )
@@ -1448,7 +1451,7 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
 #'
 #' @export
 make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , parent.adjust = 1,
-                                       decrease.daughters = TRUE, increase.parents = FALSE ){
+                                       decrease.daughters = TRUE, increase.parents = FALSE, clone_names = NA ){
   
   # one of decrease daughters or parents must be true
   if( all( !decrease.daughters & !increase.parents ) ) stop( "Please set either decrease.daughters or decrease.parents arguments to TRUE or cannot correct tree" )
@@ -1493,7 +1496,10 @@ make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , p
     if( parent.adjust * parent.CCF < daughter.total.CCF ){
       if( daughter.total.CCF / parent.CCF > warning.limit ){
         if( decrease.daughters  )  type <- "Decreasing daughter CCFs proportionally" else type <- "Increasing parent CCF"
-        warning( paste0("        ", "clone ", parent, "'s daughters have total CCF which is ", signif( (daughter.total.CCF * clonal_CCF) / parent.CCF, 3 ), "% its own CCF. ", type, "  so total CCF of daughters = parent") )
+        if( !all(is.na(clone_names)) ) parent_name <- clone_names[ clone_names$internal == parent, "orig" ] else parent_name <- parent
+        
+        warning( paste0("        ", "clone ", parent_name, "'s daughters have total CCF which is ", signif( (daughter.total.CCF * clonal_CCF) / parent.CCF, 3 ), "% its own CCF. ", type, "  so total CCF of daughters = parent") )
+       
       }
       if( increase.parents  ) CCF.data[ parentrow, "CCF" ] <- daughter.total.CCF * parent.adjust
       if( decrease.daughters  ) CCF.data[ daughterrows, "CCF" ] <- sapply(daughterrows, function(rowi) (CCF.data[ rowi, "CCF" ] / daughter.total.CCF) * parent.CCF )
