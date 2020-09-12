@@ -170,26 +170,62 @@ liver_data <- liver_data[ !clust_id %in%  c("", "bulk") ]
 
 liver_data <- liver_data[, .(donor = unique(donor), is_cancer = unique(is_cancer) ), by = .(clust_id, sample)]
 
-liver_data[, samples_present := .N, by = clust_id ]
+liver_data[, samples_present := .N, by = .(donor, clust_id) ]
 liver_data[, num_samples := length( unique( sample ) ), by = donor ]
 liver_data[, ccf := samples_present / num_samples ]
 
 liver_ccfs <- liver_data[, .(ccf = unique(ccf)), by = .(donor, clust_id)]
 
-# remove the sample identifiers on clone names
-liver_ccfs[, clust_id := sapply(strsplit( clust_id, split = "_" ), function(x) x[2] ) ]
-liver_data[, clust_id := sapply(strsplit( clust_id, split = "_" ), function(x) x[2] ) ]
-
 # now work out the tree relationships
-liver_trees <- lapply( liver_data[, unique(donor) ], function( donor ){
+liver_trees <- lapply( liver_data[, unique(donor) ], function( donor_name ){
   
-  # first get all the clones without parents or daughters
+  sample_data <- liver_data[ donor == donor_name ]
   
+  # get clones order by number of samples
+  clones <-  sample_data[ order( samples_present, decreasing = T ), ][, unique(clust_id), with = T ]
   
+  # get a list of all samples with each clone is present in
+  all_clone_samples <- lapply( clones, function(clone) sample_data[ clust_id == clone, unique(sample) ] )
+  names( all_clone_samples )  <-  clones
   
+  # build the tree from the most clonal to the least, adding relationships
+  tree <- matrix( c(clones[1], clones[1]), ncol = 2, byrow = TRUE)
   
+  for( clone in clones[ 2:length(clones) ] ){
+    
+    clone_samples <- all_clone_samples[ names(all_clone_samples) == clone ][[1]]
+    
+    clone_samples_other <- all_clone_samples[ !names(all_clone_samples) == clone ]
+    
+    # does this clones have any parents on the tree
+    parent_index <- sapply( clone_samples_other, function( samples) all( clone_samples %in% samples ) )
+    
+    if( any(parent_index) ){
+      
+      parent <- names(clone_samples_other)[ parent_index ]
+      
+      # take the parent with smallest number of samples
+      parent <- rev(clones)[ rev(clones) %in% parent ][1]
+      
+      parents_no_daughters <- any( tree[, 1] == parent & tree[, 2] == parent )
+      
+      if( parents_no_daughters == TRUE ) tree[ tree[, 1] %in% parent, 2] <- clone
+      
+      if( parents_no_daughters == FALSE ) tree <- rbind( tree,  matrix( c(parent, clone), ncol = 2 ) )
+      
+    } else {
+      
+      tree <- rbind( tree, matrix( c(clone, clone), ncol = 2, byrow = TRUE))
+      
+    }
+    
+  } 
+  
+  return( tree )
+
 })
 
+names(liver_trees) <- liver_data[, unique(donor) ]
 
 ### All ccf data at region level, also calculate ccfs over all samples in a patient ###
  
@@ -283,6 +319,26 @@ lung_patient_maps <- lapply( unique(lung_ccfs$SampleID), function( pat ){
 
 names(lung_patient_maps) <- unique( lung_ccfs$SampleID )
 
+liver_maps <- lapply( unique(liver_ccfs$donor), function( pat ){
+  
+  # get ccfs with correct input names
+  ccfs <- liver_ccfs[ donor == pat , .(clust_id, ccf) ]
+  names(ccfs) <- c("clones", "CCF")
+  
+  #get tree
+  tree <- liver_trees[ names(liver_trees) == pat ][[1]]
+  
+  return(
+    
+    cloneMap::cloneMap( tree.mat = tree, 
+                        CCF.data = ccfs, 
+                        output.Clone.map.obj = TRUE, 
+                        high_qualty_mode = TRUE, 
+                        plot.data = FALSE )
+    
+  )
+  
+})
 
 
 #=============================================#
