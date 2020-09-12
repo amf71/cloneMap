@@ -468,7 +468,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       # if clones are growing make the last 5 rounds slower to avoid inter-weaving of clones #
       if(  min_growth < max_growth ){
         
-        #normally do the last 5 steps more slowly
+        # normally do the last 5 steps more slowly
         number_of_last <- 5
         
         # if < 5 steps do it for all steps #
@@ -930,7 +930,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           
           plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){ x == clone }, dissolve = TRUE) )
           plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness = smoothing.par) # smoothing par specified in arguemnts
-          raster::plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = "grey20", lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
+          raster::plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = border.colour, lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
           
         }
         
@@ -1031,7 +1031,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       # plot the clone #
       plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == clone}, dissolve = TRUE))
       plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par specified in arguments
-      raster::plot(plot.smooth, col = clone.cols[ names(clone.cols) == clone ], border = "grey20", lwd = border.thickness, add = TRUE) # border thickness specified in arguments and colour can be specified in arguments
+      raster::plot(plot.smooth, col = clone.cols[ names(clone.cols) == clone ], border = border.colour, lwd = border.thickness, add = TRUE) # border thickness specified in arguments and colour can be specified in arguments
       
     }
     
