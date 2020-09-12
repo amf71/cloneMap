@@ -139,7 +139,7 @@
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
                        plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
-                       resolution.index = 100,  smoothing.par = 15, repeat.limit = 4, space_fraction = NA,
+                       resolution.index = 100,  smoothing.par = 10, repeat.limit = 4, space_fraction = NA,
                        tissue_border = FALSE){
   
   # work out whether to track function in detail #
@@ -360,9 +360,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       if( tissue_border == TRUE ){
         
         # adjust the smoothing parameter depending on clone size
-        clone_diameter <- sqrt( sum( clones_rasterised_plot == 1000 ) / 3.14 ) * 2
-        clone_diameter_fraction <-  clone_diameter / resolution.index 
-        smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+        clone_radius <- sqrt( sum( clones_rasterised == 1000 ) / 3.14 )
+        clone_radius_fraction <-  clone_radius / resolution.index
+        # reduce affect of clone size as lower resolution with small clones causes bumps
+        clone_radius_fraction <- ((1 - clone_radius_fraction) / 10 ) + clone_radius_fraction
+        smoothing.par.plot <- smoothing.par * clone_radius_fraction 
         
         # ensure raster is class numeric not char #
         clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
@@ -434,7 +436,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         
         mindist <- sapply( 1:nrow(nucleus.option), function(i){
           
-          dists <- make.distance.matrix( clones_rasterised, nucleus = as.numeric( nucleus.option[i,  ] ) )
+          # use type = square as its quicker though less accurate
+          dists <- make.distance.matrix( clones_rasterised, nucleus = as.numeric( nucleus.option[i,  ] ), type = 'square' )
           
           dists <- unlist( lapply( which( !1:nrow( nucleus.option ) == i ), function(i2) dists[ nucleus.option[ i2, "x" ], nucleus.option[ i2, "y" ] ]) )
          
@@ -569,10 +572,12 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       for( root.clone in root){
       
-      # adjust the smoothing parameter depending on clone size
-        clone_diameter <- sqrt( CCF.data[ CCF.data$clone == root.clone, "area" ] / 3.14 ) * 2
-        clone_diameter_fraction <-  clone_diameter / resolution.index 
-        smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+        # adjust the smoothing parameter depending on clone size
+        clone_radius <- sqrt( CCF.data[ CCF.data$clone == root.clone, "area" ] / 3.14 )
+        clone_radius_fraction <-  clone_radius / resolution.index
+        # reduce affect of clone size as lower resolution with small clones causes bumps
+        clone_radius_fraction <- ((1 - clone_radius_fraction) / 10 ) + clone_radius_fraction
+        smoothing.par.plot <- smoothing.par * clone_radius_fraction
         
       ## plot the clonal clone(s) ##
       # message suppressed for rgeos package loading #
@@ -703,7 +708,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
             
             mindist <- sapply( 1:nrow(nucleus.option), function(i){
               
-              dists <- make.distance.matrix( clones_rasterised, nucleus = as.numeric( nucleus.option[i,  ] ) )
+              # use type = square as its quicker though less accurate
+              dists <- make.distance.matrix( clones_rasterised, nucleus = as.numeric( nucleus.option[i,  ] ), type = 'square' )
               
               dists <- unlist( lapply( which( !1:nrow( nucleus.option ) == i ), function(i2) dists[ nucleus.option[ i2, "x" ], nucleus.option[ i2, "y" ] ]) )
               
@@ -933,9 +939,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         for(clone in daughters){
           
           # adjust the smoothing parameter depending on clone size
-          clone_diameter <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 ) * 2
-          clone_diameter_fraction <-  clone_diameter / resolution.index 
-          smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+          clone_radius <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 )
+          clone_radius_fraction <-  clone_radius / resolution.index
+          # reduce affect of clone size as lower resolution with small clones causes bumps
+          clone_radius_fraction <- ((1 - clone_radius_fraction) / 10 ) + clone_radius_fraction
+          smoothing.par.plot <- smoothing.par * clone_radius_fraction
           
           # ensure raster is numeric #
           clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
@@ -1035,9 +1043,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       clone.daughters <- clone.daughters[!clone.daughters == clone]
       
       # adjust the smoothing parameter depending on clone size
-      clone_diameter <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 ) * 2
-      clone_diameter_fraction <-  clone_diameter / resolution.index 
-      smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+      clone_radius <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 )
+      clone_radius_fraction <-  clone_radius / resolution.index
+      # reduce affect of clone size as lower resolution with small clones causes bumps
+      clone_radius_fraction <- ((1 - clone_radius_fraction) / 10 ) + clone_radius_fraction
+      smoothing.par.plot <- smoothing.par * clone_radius_fraction
       
       # make a new raster object where all the daughters are == parent clone #
       
