@@ -139,7 +139,7 @@
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
                        plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
-                       resolution.index = 100,  smoothing.par = 10, repeat.limit = 4, space_fraction = NA,
+                       resolution.index = 100,  smoothing.par = 15, repeat.limit = 4, space_fraction = NA,
                        tissue_border = FALSE){
   
   # work out whether to track function in detail #
@@ -359,6 +359,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       # if specified in arguments add a border around the plot area
       if( tissue_border == TRUE ){
         
+        # adjust the smoothing parameter depending on clone size
+        clone_diameter <- sqrt( sum( clones_rasterised_plot == 1000 ) / 3.14 ) * 2
+        clone_diameter_fraction <-  clone_diameter / resolution.index 
+        smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+        
         # ensure raster is class numeric not char #
         clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
         
@@ -374,7 +379,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         # note: smoothing will make the plotted area slightly underestimate the true area but by only very little #
         # also has the advantage that you can see parent clones below at smooth edges and it becomes easier too   #
         # see tree relationships                                                                                  #
-        plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par)
+        plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par.plot)
         
         # specify border thickness & colour in arguments - default is 1.5 & grey #
         raster::plot( plot.smooth, col = 'white', border = border.colour, lwd = border.thickness, add = TRUE ) 
@@ -563,6 +568,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       if( tissue_border == FALSE ) raster::plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
       
       for( root.clone in root){
+      
+      # adjust the smoothing parameter depending on clone size
+        clone_diameter <- sqrt( CCF.data[ CCF.data$clone == root.clone, "area" ] / 3.14 ) * 2
+        clone_diameter_fraction <-  clone_diameter / resolution.index 
+        smoothing.par.plot <- smoothing.par * clone_diameter_fraction
         
       ## plot the clonal clone(s) ##
       # message suppressed for rgeos package loading #
@@ -572,7 +582,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       # note: smoothing will make the plotted area slightly underestimate the true area but by only very little #
       # also has the advantage that you can see parent clones below at smooth edges and it becomes easier too   #
       # see tree relationships                                                                                  #
-      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par)
+      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par.plot)
       
       # specify border thickness & colour in arguments - default is 1.5 & grey #
       raster::plot( plot.smooth, col = clone.cols[ names( clone.cols ) == root.clone ], border = border.colour, lwd = border.thickness, add = TRUE ) 
@@ -922,6 +932,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         
         for(clone in daughters){
           
+          # adjust the smoothing parameter depending on clone size
+          clone_diameter <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 ) * 2
+          clone_diameter_fraction <-  clone_diameter / resolution.index 
+          smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+          
           # ensure raster is numeric #
           clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
           
@@ -929,7 +944,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           rasterPlot <- raster::raster( clones_rasterised_plot )
           
           plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){ x == clone }, dissolve = TRUE) )
-          plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness = smoothing.par) # smoothing par specified in arguemnts
+          plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness = smoothing.par.plot) # smoothing par specified in arguemnts
           raster::plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = border.colour, lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
           
         }
@@ -1019,6 +1034,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       clone.daughters <- clone.daughters[!clone.daughters == clone]
       
+      # adjust the smoothing parameter depending on clone size
+      clone_diameter <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 ) * 2
+      clone_diameter_fraction <-  clone_diameter / resolution.index 
+      smoothing.par.plot <- smoothing.par * clone_diameter_fraction
+      
       # make a new raster object where all the daughters are == parent clone #
       
       clones_rasterised_plot <- clones_rasterised
@@ -1030,7 +1050,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
       # plot the clone #
       plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == clone}, dissolve = TRUE))
-      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par) # smoothing par specified in arguments
+      plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness= smoothing.par.plot) # smoothing par specified in arguments
       raster::plot(plot.smooth, col = clone.cols[ names(clone.cols) == clone ], border = border.colour, lwd = border.thickness, add = TRUE) # border thickness specified in arguments and colour can be specified in arguments
       
     }
@@ -1283,6 +1303,8 @@ calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon' ){
   
   tree <- suppressMessages( logically.order.tree( tree ) )
   
+  CCF.data <- make.CCFs.tree.consistant( tree, CCF.data )
+  
   parents_with_subclones <- unique( tree[ !tree[, 1] == tree[, 2], 1] )
   
   CCF.data$prevelence <- CCF.data$CCF
@@ -1291,7 +1313,7 @@ calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon' ){
     
     # get CCF of all daughters
     # first get all daughters
-    daughters <- extract_daughters( tree, clone )
+    daughters <- tree[ tree[,1] == clone, 2 ]
     
     # sum the ccf
     daughter_ccf <- sum( CCF.data[ CCF.data$clones %in% daughters, "CCF" ] )
