@@ -139,7 +139,7 @@
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
                        plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
-                       resolution.index = 100,  smoothing.par = 10, repeat.limit = 4, space_fraction = NA,
+                       resolution.index = 100,  smoothing.par = 15, repeat.limit = 4, space_fraction = NA,
                        tissue_border = FALSE){
   
   # work out whether to track function in detail #
