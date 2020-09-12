@@ -139,7 +139,7 @@
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
                        plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
                        clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
-                       resolution.index = 100,  smoothing.par = 15, repeat.limit = 4, space_fraction = NA,
+                       resolution.index = 100,  smoothing.par = 30, repeat.limit = 4, space_fraction = NA,
                        tissue_border = FALSE){
   
   # work out whether to track function in detail #
@@ -167,6 +167,10 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     if( ! all(class(clone_map) == "Clone map") ) stop( "incorrect raster input" )
     tree.mat <- clone_map$tree_internal
     clone_names <- clone_map$names_match
+    CCF.data <- clone_map$CCFs
+    
+    # convert names to internal
+    CCF.data$clone <- clone_names[ match( CCF.data$clone, clone_names$orig), "internal" ]
 
   } else {
   
@@ -222,6 +226,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
    clone.cols <- make_clone_col_input( clones, brewer.palette )
     
   } else {
+    
+    # subset for those clones which are present
+    clone.cols <- clone.cols[ names(clone.cols) %in% clone_names$orig ]
     
     # if clone colours provided then make clone names into internal numeric clone names
     names(clone.cols) <- clone_names[ match( names(clone.cols), clone_names$orig ), "internal" ]
