@@ -981,8 +981,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       tree.orig <- tree.mat
       
       CCF.data.orig$clones <- clone_names[ match( CCF.data.orig$clones, clone_names$internal ), "orig" ]
-      tree.orig[, 1] <- clone_names[ match( tree.orig[, 1], clone_names$internal ), "orig" ]
-      tree.orig[, 2] <- clone_names[ match( tree.orig[, 2], clone_names$internal ), "orig" ]
+      tree.orig[, 1] <- as.character( clone_names[ match( tree.orig[, 1], clone_names$internal ), "orig" ] )
+      tree.orig[, 2] <- as.character( clone_names[ match( tree.orig[, 2], clone_names$internal ), "orig" ] )
       
       clones_rasterised <- list( clone_matrix = clones_rasterised_plot, 
                                  tree_internal = tree.mat, 
@@ -1339,7 +1339,7 @@ calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon' ){
     # with exactly the parent genotype
     parent_CCF <- CCF.data[ CCF.data$clones == clone, "CCF" ]
     
-    parent_prevelence <- parent_CCF - daughter_ccf
+    parent_prevelence <- round( parent_CCF - daughter_ccf, 4 )
     
     CCF.data[ CCF.data$clones == clone, "prevelence" ] <- parent_prevelence
     
