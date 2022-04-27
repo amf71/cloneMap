@@ -27,7 +27,7 @@
 #' a `clone_map` object which has previously been outputted by setting 
 #' `output.Clone.map.obj` as TRUE. This contains data specifying tree structure
 #' and the positions of clones. When inputting a tree and a CCF table, clone 
-#' positions are semi-randomly generated but when inputting a `clone_map` postions
+#' positions are semi-randomly generated but when inputting a `clone_map` positions
 #' will be the identical each time as the postions are recorded in the input and 
 #' once the `clone_map` has been generated the plotting is far quicker. 
 #' 
@@ -78,6 +78,11 @@
 #' repeats the function will use various mechanisms to decrease the probability of non-continuous
 #' clones even further but at the expense of even longer run times.
 #'  
+#' @param inc_parents_ccf Binary parameter to deal with inconsistencies between CCFs and the tree (ie when 
+#' a parent has a lower CCF that its daughter). If TRUE then parents will be increased to match the total
+#' CCF of thier daughters (and a warning will be outputted) and if FALSE then the CCF of daughters will be
+#' increased proportionally to match the CCF of thier parents.
+#' 
 #' @param space_fraction When an unrooted tree is provided how much much of the plot should be white space.
 #' White space indicates non-mutated tissue and hence the density of the clones. Default is NA in which case
 #' the amount of white space will be determined by the CCFs provided i.e. if all the root clone CCFs add up to
@@ -137,10 +142,10 @@
 #' 
 #' @export
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
-                       plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
-                       clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
-                       resolution.index = 100,  smoothing.par = 30, repeat.limit = 4, space_fraction = NA,
-                       tissue_border = FALSE){
+                      plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
+                      clone.cols = NA, border.colour = "grey20",  border.thickness = 1.5,
+                      resolution.index = 100,  smoothing.par = 30, repeat.limit = 4, inc_parents_ccf = TRUE, 
+                      space_fraction = NA, issue_border = FALSE){
   
   # work out whether to track function in detail #
   if( high_qualty_mode & is.na( track )) track <- TRUE
@@ -283,7 +288,8 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # > ~130% of parent this should be checked and tree/clones/CCFs may be incorrect                        #
     CCF.data <- make.CCFs.tree.consistant( tree.mat = tree.mat, 
                                            CCF.data = CCF.data, 
-                                           clone_names = clone_names )   ## Function specified below 
+                                           clone_names = clone_names,
+                                           increase.parents = inc_parents_ccf)   ## Function specified below 
     
     
     ######===============================================================######
@@ -555,12 +561,12 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       
     }
     
-    #  plot.data == true if you want to plot the rasterised data as it is generate, if plot = FLASE   #
+    #  plot.data == true if you want to plot the rasterised data as it is generated, if plot = FALSE   #
     #  you can set output.rasterised.data == TRUE then instead of plotting the function will output   #
     #  the rasterised clone data to save a plot whenever you like. This is particularly useful as     #
     #  clones are seeded at random so by saving the rasterised data you can ensure the clones don't   #
-    #  change positions each time you plot them. You can input the rasterised data & instead of a CCF  #
-    #  table with the Clone_map argument                                                            #
+    #  change positions each time you plot them. You can input the rasterised data instead of a CCF  #
+    #  table & tree with the Clone_map argument                                                            #
     
     if( plot.data == TRUE ){
       
@@ -610,7 +616,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # get all parental clones and deal with the daughters of these in turn, starting with the daughters of the clonal cluster #
     # this will be in order of trunk -> branch -> leaf as tree has been ordered as such #
     # col 1 of tree always = parents #
-    # exclude where root -> root is indcating for a clone with out a child
+    # exclude where root -> root is indicating for a clone with out a child
     parents <- unique( tree.mat[ !tree.mat[, 1] == tree.mat[, 2], 1 ] )
     
     # signpost #
@@ -989,8 +995,10 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
                                  names_match = clone_names,
                                  CCFs = CCF.data.orig,
                                  tree = tree.orig,
-                                 shannon_diversity = calc_clonal_diversity( CCF.data.orig, tree.orig, method = 'shannon' ),
-                                 simpson_diversity = calc_clonal_diversity( CCF.data.orig, tree.orig, method = 'simpson' ))
+                                 shannon_diversity = calc_clonal_diversity( CCF.data.orig, tree.orig, method = 'shannon',
+                                                                            inc_parents_ccf = inc_parents_ccf),
+                                 simpson_diversity = calc_clonal_diversity( CCF.data.orig, tree.orig, method = 'simpson',
+                                                                            inc_parents_ccf = inc_parents_ccf))
       
       class(clones_rasterised) <- "Clone map"
       
@@ -1316,11 +1324,12 @@ logically.order.tree <- function( tree ){
 #' function of the `vegan` package and can be "shannon", "simpson" or "invsimpson"
 #' 
 #' @export
-calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon' ){
+calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon', inc_parents_ccf = TRUE ){
   
   tree <- suppressMessages( logically.order.tree( tree ) )
   
-  CCF.data <- make.CCFs.tree.consistant( tree, CCF.data )
+  CCF.data <- make.CCFs.tree.consistant( tree, CCF.data, ,
+                                         increase.parents = inc_parents_ccf )
   
   parents_with_subclones <- unique( tree[ !tree[, 1] == tree[, 2], 1] )
   
@@ -1540,8 +1549,8 @@ make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , p
         warning( paste0("        ", "clone ", parent_name, "'s daughters have total CCF which is ", signif( (daughter.total.CCF * clonal_CCF) / parent.CCF, 3 ), "% its own CCF. ", type, "  so total CCF of daughters = parent") )
        
       }
-      if( increase.parents  ) CCF.data[ parentrow, "CCF" ] <- daughter.total.CCF * parent.adjust
-      if( decrease.daughters  ) CCF.data[ daughterrows, "CCF" ] <- sapply(daughterrows, function(rowi) (CCF.data[ rowi, "CCF" ] / daughter.total.CCF) * parent.CCF )
+      if( increase.parents  ) CCF.data[ parentrow, "CCF" ] <- daughter.total.CCF / parent.adjust
+      if( decrease.daughters  ) CCF.data[ daughterrows, "CCF" ] <- sapply(daughterrows, function(rowi) (CCF.data[ rowi, "CCF" ] / daughter.total.CCF) * parent.CCF * parent.adjust )
     }
   }
   

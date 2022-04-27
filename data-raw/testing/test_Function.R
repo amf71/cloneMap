@@ -1,7 +1,7 @@
 ###### script to test that the function is still working properly after any changes ######
 
 #should change to function that automatically gets to git parent dir
-setwd("/Volumes/proj-tracerx-lung/tctProjects/frankella/R_packages/cloneMaps")
+setwd("/Volumes/proj-tracerx-lung/tctProjects/frankella/repos/my_R_packages/cloneMaps")
 
 # load required libraries
 library(qlcMatrix)

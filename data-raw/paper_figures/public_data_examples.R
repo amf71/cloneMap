@@ -12,6 +12,8 @@
 ## load required libraries ##
 ##=========================##
 
+.libPaths( '/Library/Frameworks/R.framework/Resources/library/' )
+
 library(readxl)
 library(httr)
 library(data.table)
@@ -165,7 +167,10 @@ liver_data <- data.table::fread( tf )
 
 # in this data set use % of samples as a proxy to calculate CCF - true ccfs not provided #liverclust
 
-#remove mutations unassigned to cltuered
+# make mut id
+liver_data[, mut_id := paste( chrom, pos, alt, sep = ':' )]
+
+# remove mutations unassigned to clusters
 liver_data <- liver_data[ !clust_id %in%  c("", "bulk") ]
 
 liver_data <- liver_data[, .(donor = unique(donor), is_cancer = unique(is_cancer) ), by = .(clust_id, sample)]
@@ -226,6 +231,8 @@ liver_trees <- lapply( liver_data[, unique(donor) ], function( donor_name ){
 })
 
 names(liver_trees) <- liver_data[, unique(donor) ]
+
+
 
 ### All ccf data at region level, also calculate ccfs over all samples in a patient ###
  
@@ -311,7 +318,8 @@ lung_patient_maps <- lapply( unique(lung_ccfs$SampleID), function( pat ){
                         CCF.data = ccfs, 
                         output.Clone.map.obj = TRUE, 
                         high_qualty_mode = TRUE, 
-                        plot.data = FALSE )
+                        plot.data = FALSE,
+                        space_fraction = 0.4 )
     
   )
   
