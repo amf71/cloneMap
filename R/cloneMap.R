@@ -135,7 +135,7 @@
 #' # Here space_fraction indicates that 70% of the plot area should be white space #
 #' # indicating that only 70% of cells are wild type.
 #' 
-#' cloneMap( tree.mat = tree_example_poly, 
+#' cloneMap( tree.mat = tree_examkeple_poly, 
 #' CCF.data = CCF_example_poly,
 #' tissue_border = TRUE,
 #' space_fraction = 0.7 )
@@ -439,10 +439,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       nucleus.options <- matrix.index.to.coordinates( matrix.index = which(nucleus.options), 
                                                       nrow = nrow( clones_rasterised ), 
                                                       ncol = ncol( clones_rasterised ) ) ## Function specified below
-      
+
       nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), 
-                                                                                                  length(root), 
-                                                                                                  replace = F), ] )
+                                                                                                  length(root)), ] )
       
       # for each possible nuclei set work out the average distance between the sets of nuclei #
       nucleus.options.min.dists <-  sapply( nucleus.options.sel, function( nucleus.option ){
@@ -461,7 +460,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       } )
       
       # select the set of nuclei with the maximum distance
-      max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))
+      max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))[1]
       nuclei <- nucleus.options.sel[[ max_dist_i ]]
       
       nuclei <- lapply( 1:nrow(nuclei), function(x) as.numeric( nuclei[x, ] ) )
@@ -697,7 +696,6 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           if( repeati > 2 ){
             nucleus.options <- parent.dist.mat > (parent_distance_cutoff * 0.4) & parent.dist.mat < (parent_distance_cutoff * 0.8) & clones_rasterised_parent == parent
           } 
-          
           # convert raster matrix TRUE positions to cordinates for possible nucleation #
           nucleus.options <- matrix.index.to.coordinates( matrix.index = which( nucleus.options ), nrow = nrow( clones_rasterised ), ncol = ncol( clones_rasterised ) ) ## Function specified below
           
@@ -714,7 +712,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           if( length(daughters) == 1) nuclei_sample_number = 1
           
           # get x / y coordinates in raster for possible clone nuclei
-          nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), length(daughters), replace = F), ] )
+          nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), length(daughters) ), ] )
           
           # for each possible nuclei set work out the average distance between the sets of nuclei #
           nucleus.options.min.dists <-  sapply( nucleus.options.sel, function( nucleus.option ){
@@ -739,7 +737,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           # randomly choose the set of nuclei which is in the upper fifth of distances apart #
           if(!( length(daughters) > 2 & total.CCF.daughters > CCF.parent * 0.5 )){
             
-            nucleus.options.sel <- nucleus.options.sel[ nucleus.options.min.dists > stats::quantile( nucleus.options.min.dists, 0.80 ) ]
+            nucleus.options.sel <- nucleus.options.sel[ nucleus.options.min.dists >= stats::quantile( nucleus.options.min.dists, 0.80 ) ]
             selected.i <- sample( 1:length( nucleus.options.sel ), 1 )
             nuclei <- nucleus.options.sel[[ selected.i ]]
             nuclei_min_distance <-  nucleus.options.min.dists[[ selected.i ]]
@@ -747,7 +745,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           # otherwise just take the max distance between clones #
           } else {
             
-            max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))
+            max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))[1]
             nuclei <- nucleus.options.sel[[ max_dist_i ]]
             nuclei_min_distance <-  nucleus.options.min.dists[[ max_dist_i ]]
             
@@ -1512,11 +1510,14 @@ make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , p
   tree.clones <- unique( as.numeric(tree.mat) )
   if( !all( tree.clones %in% CCF.data$clones) ) tree.mat <- remove.clones.on.tree( tree.mat, clones.to.keep = CCF.data$clones )
   
+  # order tree trunk -> leaf #
+  tree.mat <- suppressMessages( logically.order.tree( tree.mat ) )
+  
   # get root #
   root <- find_root( tree.mat )
   
   # get ordered list of parents #
-  parent.order <- unique(tree.mat[,1])
+  parent.order <- as.character( unique(tree.mat[,1]) )
   if( decrease.daughters == FALSE ) parent.order <- rev( parent.order )
   
   # detect if fractions or percentages # 
@@ -1557,10 +1558,10 @@ make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , p
   # normalise to root #
   # if the clonal cluster CCF needed to be increased then adjust this back down too 1 and adjust all other clones by similar margin #
   clonalCCF.change <- CCF.data$CCF[1] / clonal_CCF
-  if( clonalCCF.change > 1 ) warning( paste0("        Clonal CCF needed increasing by ", clonalCCF.change * 100, "% to accommodate daughters. Therefore decreasing all CCFs proportionally so clonal CCF == 1 again") )
+  if( clonalCCF.change > 1 ) warning( paste0("        Clonal CCF needed increasing by ", round(clonalCCF.change * 100, 2), "% to accommodate daughters. Therefore decreasing all CCFs proportionally so clonal CCF == 1 again") )
   
   # ensure clonal cluster = 1 if not polyclonal #
-  if( length(root) == 1 ) CCF.data$CCF <- ( (CCF.data$CCF * clonal_CCF) / CCF.data[ CCF.data$clones == root, "CCF"] ) 
+  if( length(root) == 1 ) CCF.data$CCF <- (CCF.data$CCF * clonal_CCF) / CCF.data[ CCF.data$clones == root, "CCF"] 
   
   return( CCF.data )
   
