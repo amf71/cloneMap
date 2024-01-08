@@ -15,7 +15,7 @@ Unfortunately the R package Rgeos which is required for cloneMaps was recently a
 brew install geos
 ```
 ```R
- install.packages("rgeos", repos="http://R-Forge.R-project.org", type="source”)
+install.packages("rgeos", repos="http://R-Forge.R-project.org", type="source”)
 ```
 
 You can then use devtools::install_github() to install cloneMap from this repository:
