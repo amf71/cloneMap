@@ -104,12 +104,19 @@
 #' 
 #' @examples 
 #' # example objects provided in env after loading package #
+#' # a reduced resolution.index is used here to keep this example quick; #
+#' # the default (100) gives smoother, publication-quality output #
+#' 
+#' cloneMap( tree_example, CCFs_example_1, resolution.index = 30 )
+#' 
+#' \donttest{
+#' # full resolution (default) #
 #' 
 #' cloneMap( tree_example, CCFs_example_1 )
 #' cloneMap( tree_example, CCFs_example_2 ) 
-#'
 #' 
-#' # Use a clone_map object to  plot cloneMap reproducibility #
+#' 
+#' # Use a clone_map object to reproduce a plot exactly, and much faster #
 #' 
 #' clone_map_eg <- cloneMap( tree_example, CCFs_example_2, 
 #'                           output.Clone.map.obj = TRUE, plot.data = FALSE )
@@ -135,10 +142,11 @@
 #' # Here space_fraction indicates that 70% of the plot area should be white space #
 #' # indicating that only 70% of cells are wild type.
 #' 
-#' cloneMap( tree.mat = tree_examkeple_poly, 
+#' cloneMap( tree.mat = tree_example_poly, 
 #' CCF.data = CCF_example_poly,
 #' tissue_border = TRUE,
 #' space_fraction = 0.7 )
+#' }
 #' 
 #' @export
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
@@ -737,7 +745,10 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           # randomly choose the set of nuclei which is in the upper fifth of distances apart #
           if(!( length(daughters) > 2 & total.CCF.daughters > CCF.parent * 0.5 )){
             
-            nucleus.options.sel <- nucleus.options.sel[ nucleus.options.min.dists >= stats::quantile( nucleus.options.min.dists, 0.80 ) ]
+            # subset options and their distances together so that the two stay aligned #
+            keep <- nucleus.options.min.dists >= stats::quantile( nucleus.options.min.dists, 0.80 )
+            nucleus.options.sel <- nucleus.options.sel[ keep ]
+            nucleus.options.min.dists <- nucleus.options.min.dists[ keep ]
             selected.i <- sample( 1:length( nucleus.options.sel ), 1 )
             nuclei <- nucleus.options.sel[[ selected.i ]]
             nuclei_min_distance <-  nucleus.options.min.dists[[ selected.i ]]
@@ -774,13 +785,23 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         names( nuclei.dists ) <- daughters
         
         # just check that nuclei are definitely within the parent #
-        # (the error is extremely rare now but cannot be ruled out 100%) #
-        # This will almost always be resolved when the sample is rerun #
+        # (this is rare but cannot be ruled out 100%) #
         # if nucleus outside parent then will have been set to Inf therefore the matrix will lack a 0 #
+        # rather than aborting, draw a fresh set of nuclei via the enclosing repeat loop - #
+        # the positions are semi-random so a retry almost always resolves it #
         bad_nucleus <- sapply( sapply( 1:length(daughters), function(i) which( nuclei.dists[[i]] == 0 )), length) == 0
         if( any( bad_nucleus ) ){
           
-          stop( paste0( "(BUG) chosen nucleus outside of parent for clone ", daughters[ bad_nucleus ], ". Try rerunning.") )
+          if( repeati >= max( repeat.limit, 10 ) ){
+            stop( paste0( "chosen nucleus outside of parent for clone ", 
+                          paste( daughters[ bad_nucleus ], collapse = ", " ), 
+                          " after ", repeati, " attempts. Please report this at ",
+                          "https://github.com/amf71/cloneMap/issues" ) )
+          }
+          
+          if( track ) message( "        chosen nucleus outside of parent, retrying with new nuclei..." )
+          
+          next
           
         }
         
@@ -1212,7 +1233,7 @@ make.distance.matrix <- function( matrix.outline , nucleus , type = "octoagon" )
     dist.mat <- do.call( cbind, lapply( 1:ncol( matrix.outline ), function( col ){
       
       out <- cbind( dist.mat.h[, col ], dist.mat.v[, col ])
-      return( as.numeric( qlcMatrix::rowMax( out ) ) )
+      return( as.numeric( pmax( out[, 1], out[, 2] ) ) )
       
     }))
     
@@ -1320,6 +1341,10 @@ logically.order.tree <- function( tree ){
 #' 
 #' @param method which method of diversity calculation should be used. These are borrows from the `diversity` 
 #' function of the `vegan` package and can be "shannon", "simpson" or "invsimpson"
+#' 
+#' @param inc_parents_ccf Binary parameter to deal with inconsistencies between CCFs and the tree (ie when
+#' a parent has a lower CCF than its daughters). If TRUE parents are increased to match the total CCF of
+#' their daughters; if FALSE the CCF of daughters is decreased proportionally to match their parent.
 #' 
 #' @export
 calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon', inc_parents_ccf = TRUE ){
@@ -1494,6 +1519,9 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
 #' 
 #' @param increase.parents Do you want to increase the parent CCF to account for instances where daughter 
 #' CCF > parent CCF
+#'
+#' @param clone_names Optional character vector of clone names to restrict the output to. If NA
+#' (the default) all clones present in the tree are returned.
 #'
 #' @export
 make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , parent.adjust = 1,

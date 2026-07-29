@@ -9,19 +9,9 @@ A function to map the distribution of somatic clones in sample or set of samples
 
 ## Installation & loading
 
-Unfortunately the R package Rgeos which is required for cloneMaps has been archieved on CRAN. Therefore install geos using homebrew and install the R package using R-Forge:
-
-```
-brew install geos
-```
 ```R
-install.packages("rgeos", repos="http://R-Forge.R-project.org", type="source”)
-```
-
-You can then use devtools::install_github() to install cloneMap from this repository:
-
-```R
-devtools::install_github("amf71/cloneMap")`
+# install.packages("remotes")
+remotes::install_github("amf71/cloneMap")
 ```
 
 load package:
@@ -29,6 +19,18 @@ load package:
 ```R
 library(cloneMap)
 ```
+
+All dependencies are on CRAN and install automatically. No manual steps,
+no Homebrew, no R-Forge.
+
+> **Note for users of older versions:** cloneMap previously required the
+> `rgeos` package, which was archived from CRAN in 2023, and the README asked
+> you to install `geos` via Homebrew and `rgeos` from R-Forge first. That is no
+> longer necessary and those steps can be skipped. `rgeos` was never called
+> directly by cloneMap &mdash; it was only an indirect backend for
+> `raster::rasterToPolygons(dissolve = TRUE)`. Since raster 3.5-29 (Aug 2022)
+> that operation is handled by `terra` instead, so the dependency was simply
+> stale. Plot output is unchanged.
 
 ## Usage examples - rooted trees
 

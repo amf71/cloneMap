@@ -5,7 +5,12 @@
 \title{function to calculate shannon or simpson diversity of clonal 
 prevalence from CCF table input}
 \usage{
-calc_clonal_diversity(CCF.data, tree, method = "shannon")
+calc_clonal_diversity(
+  CCF.data,
+  tree,
+  method = "shannon",
+  inc_parents_ccf = TRUE
+)
 }
 \arguments{
 \item{CCF.data}{a table of clone CCFs with column 1 (named 'clone') specifying clone names and 
@@ -15,6 +20,10 @@ column 2 (name 'CCF') specifying CCFs as either fractions or percentages}
 
 \item{method}{which method of diversity calculation should be used. These are borrows from the `diversity` 
 function of the `vegan` package and can be "shannon", "simpson" or "invsimpson"}
+
+\item{inc_parents_ccf}{Binary parameter to deal with inconsistencies between CCFs and the tree (ie when
+a parent has a lower CCF than its daughters). If TRUE parents are increased to match the total CCF of
+their daughters; if FALSE the CCF of daughters is decreased proportionally to match their parent.}
 }
 \description{
 clonal prevalence indicates, for each clone,

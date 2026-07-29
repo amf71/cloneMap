@@ -32,6 +32,9 @@ CCF > parent CCF}
 
 \item{increase.parents}{Do you want to increase the parent CCF to account for instances where daughter 
 CCF > parent CCF}
+
+\item{clone_names}{Optional character vector of clone names to restrict the output to. If NA
+(the default) all clones present in the tree are returned.}
 }
 \description{
 Function to correct CCFs when sum of daughter CCFs > parent CCF

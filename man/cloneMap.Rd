@@ -17,8 +17,9 @@ cloneMap(
   border.colour = "grey20",
   border.thickness = 1.5,
   resolution.index = 100,
-  smoothing.par = 10,
+  smoothing.par = 30,
   repeat.limit = 4,
+  inc_parents_ccf = TRUE,
   space_fraction = NA,
   tissue_border = FALSE
 )
@@ -35,7 +36,7 @@ names are "clones" and "CCF", see example data).}
 a `clone_map` object which has previously been outputted by setting 
 `output.Clone.map.obj` as TRUE. This contains data specifying tree structure
 and the positions of clones. When inputting a tree and a CCF table, clone 
-positions are semi-randomly generated but when inputting a `clone_map` postions
+positions are semi-randomly generated but when inputting a `clone_map` positions
 will be the identical each time as the postions are recorded in the input and 
 once the `clone_map` has been generated the plotting is far quicker.}
 
@@ -85,6 +86,11 @@ These repeats increase run time significantly when high_quality_mode` is TRUE. A
 repeats the function will use various mechanisms to decrease the probability of non-continuous
 clones even further but at the expense of even longer run times.}
 
+\item{inc_parents_ccf}{Binary parameter to deal with inconsistencies between CCFs and the tree (ie when 
+a parent has a lower CCF that its daughter). If TRUE then parents will be increased to match the total
+CCF of thier daughters (and a warning will be outputted) and if FALSE then the CCF of daughters will be
+increased proportionally to match the CCF of thier parents.}
+
 \item{space_fraction}{When an unrooted tree is provided how much much of the plot should be white space.
 White space indicates non-mutated tissue and hence the density of the clones. Default is NA in which case
 the amount of white space will be determined by the CCFs provided i.e. if all the root clone CCFs add up to
@@ -107,12 +113,19 @@ between clones
 }
 \examples{
 # example objects provided in env after loading package #
+# a reduced resolution.index is used here to keep this example quick; #
+# the default (100) gives smoother, publication-quality output #
+
+cloneMap( tree_example, CCFs_example_1, resolution.index = 30 )
+
+\donttest{
+# full resolution (default) #
 
 cloneMap( tree_example, CCFs_example_1 )
 cloneMap( tree_example, CCFs_example_2 ) 
 
 
-# Use a clone_map object to  plot cloneMap reproducibility #
+# Use a clone_map object to reproduce a plot exactly, and much faster #
 
 clone_map_eg <- cloneMap( tree_example, CCFs_example_2, 
                           output.Clone.map.obj = TRUE, plot.data = FALSE )
@@ -142,6 +155,7 @@ cloneMap( tree.mat = tree_example_poly,
 CCF.data = CCF_example_poly,
 tissue_border = TRUE,
 space_fraction = 0.7 )
+}
 
 }
 \author{
