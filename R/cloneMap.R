@@ -344,7 +344,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     
     # now determine cut off in distance matrix which results in desired amount of area for the clonal cluster #
     possible_cutoffs <- seq( 0.1, mround( max( dist.mat ), 0.1), 0.1)
-    distance_cutoff <- min( possible_cutoffs[ sapply(possible_cutoffs, function(cut) sum(dist.mat<cut)) >= clonal.area ] )
+    # count positions below each candidate cut off by lookup into the sorted distances #
+    # rather than rescanning the whole matrix for every candidate                       #
+    distance_cutoff <- min( possible_cutoffs[ findInterval( possible_cutoffs, sort( dist.mat ), left.open = TRUE ) >= clonal.area ] )
     
     # assign clonal clone to its positions
     clones_rasterised[ dist.mat < distance_cutoff ] <- root
@@ -372,7 +374,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       plot.area <- sum( dist.mat < resolution.index / 1.8 )
       
       possible_cutoffs <- seq( 0.1, mround( max( dist.mat ), 0.1), 0.1)
-      distance_cutoff <- min( possible_cutoffs[ sapply(possible_cutoffs, function(cut) sum(dist.mat<cut)) >= plot.area ] )
+      # count positions below each candidate cut off by lookup into the sorted distances #
+      # rather than rescanning the whole matrix for every candidate                       #
+      distance_cutoff <- min( possible_cutoffs[ findInterval( possible_cutoffs, sort( dist.mat ), left.open = TRUE ) >= plot.area ] )
       
       # make everything outside this area = 1000 indicating clones cannot grow here
       clones_rasterised[ dist.mat < distance_cutoff ] <- 1000
@@ -451,22 +455,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), 
                                                                                                   length(root)), ] )
       
-      # for each possible nuclei set work out the average distance between the sets of nuclei #
-      nucleus.options.min.dists <-  sapply( nucleus.options.sel, function( nucleus.option ){
-        
-        mindist <- sapply( 1:nrow(nucleus.option), function(i){
-          
-          # use type = square as its quicker though less accurate
-          dists <- make.distance.matrix( clones_rasterised, nucleus = as.numeric( nucleus.option[i,  ] ), type = 'square' )
-          
-          dists <- unlist( lapply( which( !1:nrow( nucleus.option ) == i ), function(i2) dists[ nucleus.option[ i2, "x" ], nucleus.option[ i2, "y" ] ]) )
-         
-          return( min( dists ) )
-        })
-        
-        return( min( mindist ) )
-      } )
-      
+      # for each possible nuclei set work out the closest distance between any two nuclei #
+      nucleus.options.min.dists <- sapply( nucleus.options.sel, min.nuclei.distance ) ## Function specified below
+
       # select the set of nuclei with the maximum distance
       max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))[1]
       nuclei <- nucleus.options.sel[[ max_dist_i ]]
@@ -527,13 +518,17 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         #determine where is available for the clones to grow (area that is parent but not any of its sisters)
         is_parent_not_sister <- lapply( 1:length( root ), function(i) !clones_rasterised %in% root[ !root %in% root[i] ] & !clones_rasterised == 0 )
         
-        avialible.space <- lapply( 1:length( root ), function(i) nuclei.dists[[i]][ is_parent_not_sister[[i]] ] )
-        avialible.space <- sapply( 1:length( root ), function(i) max( avialible.space[[i]] ))
+        # distances to every position this clone could still grow into, sorted so that the  #
+        # area produced by a candidate cut off can be counted by lookup instead of         #
+        # rescanning the whole raster once per candidate                                   #
+        avialible.dists <- lapply( 1:length( root ), function(i) sort( nuclei.dists[[i]][ is_parent_not_sister[[i]] ] ) )
+        avialible.space <- sapply( 1:length( root ), function(i) max( avialible.dists[[i]] ))
         distance_cutoffs <- sapply( 1:length( root ), function(i){
-          
-          rounded.area <- mround( avialible.space[[i]], 0.1 ) 
+
+          rounded.area <- mround( avialible.space[[i]], 0.1 )
           cut.options <- seq( resolution.index / 100 , rounded.area, resolution.index / 100 )
-          clone_areas_for_cut_offs <- sapply(cut.options, function(cut) sum( nuclei.dists[[i]] < cut & is_parent_not_sister[[i]] ))
+          # findInterval( left.open = TRUE ) counts the sorted distances strictly below each cut off #
+          clone_areas_for_cut_offs <- findInterval( cut.options, avialible.dists[[i]], left.open = TRUE )
           less_then_target_area <- clone_areas_for_cut_offs <= areas[ names(areas) == root[i] ]
           
           # sometimes cannot expand anymore and no option is less_then_target_area hence max( c() ) which return -Inf hence clone won't grow - appropriate action #
@@ -722,22 +717,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           # get x / y coordinates in raster for possible clone nuclei
           nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), length(daughters) ), ] )
           
-          # for each possible nuclei set work out the average distance between the sets of nuclei #
-          nucleus.options.min.dists <-  sapply( nucleus.options.sel, function( nucleus.option ){
-            
-            mindist <- sapply( 1:nrow(nucleus.option), function(i){
-              
-              # use type = square as its quicker though less accurate
-              dists <- make.distance.matrix( clones_rasterised, nucleus = as.numeric( nucleus.option[i,  ] ), type = 'square' )
-              
-              dists <- unlist( lapply( which( !1:nrow( nucleus.option ) == i ), function(i2) dists[ nucleus.option[ i2, "x" ], nucleus.option[ i2, "y" ] ]) )
-              
-              return( min( dists ) )
-            })
-            
-            return( min( mindist ) )
-          } )
-          
+          # for each possible nuclei set work out the closest distance between any two nuclei #
+          nucleus.options.min.dists <- sapply( nucleus.options.sel, min.nuclei.distance ) ## Function specified below
+
           # space clones out as much as possible if >2 and total CCF is high #
           # If total CCF is < 50% of parent very unlikely the clones won't be continuous # 
           # we want to choose the positions randomly so we have the best chance of getting #
@@ -876,13 +858,17 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           #determine where is available for the clones to grow (area that is parent but not any of its sisters)
           is_parent_not_sister <- lapply( 1:length( daughters ), function(i) clones_rasterised_parent  == parent & !clones_rasterised %in% daughters[ !daughters %in% daughters[i] ] )
           
-          avialible.space <- lapply( 1:length( daughters ), function(i) nuclei.dists[[i]][ is_parent_not_sister[[i]] ] )
-          avialible.space <- sapply( 1:length( daughters ), function(i) max( avialible.space[[i]] ))
+          # distances to every position this clone could still grow into, sorted so that the  #
+          # area produced by a candidate cut off can be counted by lookup instead of         #
+          # rescanning the whole raster once per candidate                                   #
+          avialible.dists <- lapply( 1:length( daughters ), function(i) sort( nuclei.dists[[i]][ is_parent_not_sister[[i]] ] ) )
+          avialible.space <- sapply( 1:length( daughters ), function(i) max( avialible.dists[[i]] ))
           distance_cutoffs <- sapply( 1:length(daughters), function(i){
-            
-            rounded.area <- mround( avialible.space[[i]], 0.1 ) 
+
+            rounded.area <- mround( avialible.space[[i]], 0.1 )
             cut.options <- seq( resolution.index / 100 , rounded.area, resolution.index / 100 )
-            clone_areas_for_cut_offs <- sapply(cut.options, function(cut) sum( nuclei.dists[[i]] < cut & is_parent_not_sister[[i]] ))
+            # findInterval( left.open = TRUE ) counts the sorted distances strictly below each cut off #
+            clone_areas_for_cut_offs <- findInterval( cut.options, avialible.dists[[i]], left.open = TRUE )
             less_then_target_area <- clone_areas_for_cut_offs <= areas[ names(areas) == daughters[i] ]
             
             # sometimes cannot expand anymore and no option is less_then_target_area hence max( c() ) which return -Inf hence clone won't grow - appropriate action #
@@ -1153,99 +1139,54 @@ make_clone_col_input <- function( clones, brewer.palette = "Paired" ){
 ## sure how to do this                                                                                ##  
 
 make.distance.matrix <- function( matrix.outline , nucleus , type = "octoagon" ){
-  
-  
+
+  # distance of every row / column from the nucleus, needed by both types #
+  row.dists <- abs( seq_len( nrow( matrix.outline ) ) - nucleus[1] )
+  col.dists <- abs( seq_len( ncol( matrix.outline ) ) - nucleus[2] )
+
   ### just count rows & cols from nucleus (makes 'square' shape ) ###
-  
+
   if( type == "square" ){
-    
-    ## now calculate distance from nucleus for all pixels ##
-    
-    # dist with horizontal as primary #
-    
-    dist.mat.h <- do.call( cbind, lapply( 1:ncol( matrix.outline ), function( col ){
-      
-      # how many columns from nucleus? #
-      base.dist <- abs( nucleus[2] - col ) 
-      
-      return( rep( base.dist, nrow( matrix.outline ) ) )
-      
-    } ))
-    
-    # dist with vertical as primary #
-    
-    dist.mat.v <- do.call( rbind, lapply( 1:nrow( matrix.outline ), function( row ){
-      
-      # how many rows nucleus? #
-      base.dist <- abs( nucleus[1] - row )
-      
-      return( rep( base.dist, ncol( matrix.outline ) ) )
-      
-    } ))
-    
-    # now combine for shortest poss distance #
-    dist.mat <- do.call( cbind, lapply( 1:ncol( matrix.outline ), function( col ){
-      
-      out <- cbind( dist.mat.h[, col ], dist.mat.v[, col ])
-      return( as.numeric( rowSums( out ) ) )
-      
-    }))
-    
+
+    # distance is simply rows away + columns away #
+    dist.mat <- outer( row.dists, col.dists, "+" )
+
   }
-  
+
   ### if accounting for diagonal distance type == 'octogon' ###
-  
+
   if( type == "octoagon" ){
-    
-    ## now calculate distance from nucleus for all pxls ##
-    
-    # dist with horizontal as primary #
-    
-    dist.mat.h <- do.call( cbind, lapply( 1:ncol( matrix.outline ), function( col ){
-      
-      # how many columns from nucleus? #
-      base.dist <- abs( nucleus[2] - col )
-      
-      # addition allow us to account for diagonal movement with change in rows #
-      horizontal.additions <- abs( 1:nrow( matrix.outline ) - nucleus[1] ) * 0.41
-      
-      return( base.dist + horizontal.additions )
-      
-    } ))
-    
-    
-    # dist with vertical as primary #
-    
-    dist.mat.v <- do.call( rbind, lapply( 1:nrow( matrix.outline ), function( row ){
-      
-      # how many rows from nucleus? #
-      base.dist <- abs( nucleus[1] - row )
-      
-      # addition allow us to account for diagonal movement with change in cols #
-      vertical.additions <- abs( 1:ncol( matrix.outline ) - nucleus[2] ) * 0.41
-      
-      return( base.dist + vertical.additions )
-      
-    } ))
-    
-    # now combine for shortest poss distance #
-    
-    dist.mat <- do.call( cbind, lapply( 1:ncol( matrix.outline ), function( col ){
-      
-      out <- cbind( dist.mat.h[, col ], dist.mat.v[, col ])
-      return( as.numeric( pmax( out[, 1], out[, 2] ) ) )
-      
-    }))
-    
-  } 
-  
+
+    # taking the larger of "horizontal first" and "vertical first" travel, where the
+    # secondary direction is discounted to 0.41 per step, is equivalent to travelling
+    # the greater of the two distances at full cost and the lesser at the discount
+    dist.mat <- outer( row.dists, col.dists,
+                       function( rows, cols ) pmax( rows, cols ) + 0.41 * pmin( rows, cols ) )
+
+  }
+
   # return output #
   return( dist.mat )
-  
+
   #########
   ## END ##
   #########
-  
+
+}
+
+
+## function to find the closest distance between any two nuclei in a candidate set    ##
+## of nuclei, used to score how well spaced a candidate set is. Distance is counted in ##
+## rows + columns, matching make.distance.matrix( type = "square" ), which is the      ##
+## Manhattan distance between the coordinates                                          ##
+
+min.nuclei.distance <- function( nucleus.option ){
+
+  # a single nucleus has nothing to be spaced from #
+  if( nrow( nucleus.option ) < 2 ) return( Inf )
+
+  return( min( stats::dist( as.matrix( nucleus.option ), method = "manhattan" ) ) )
+
 }
 
 
