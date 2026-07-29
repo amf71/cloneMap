@@ -20,17 +20,10 @@ load package:
 library(cloneMap)
 ```
 
-All dependencies are on CRAN and install automatically. No manual steps,
-no Homebrew, no R-Forge.
+All dependencies are on CRAN and install automatically.
 
-> **Note for users of older versions:** cloneMap previously required the
-> `rgeos` package, which was archived from CRAN in 2023, and the README asked
-> you to install `geos` via Homebrew and `rgeos` from R-Forge first. That is no
-> longer necessary and those steps can be skipped. `rgeos` was never called
-> directly by cloneMap &mdash; it was only an indirect backend for
-> `raster::rasterToPolygons(dissolve = TRUE)`. Since raster 3.5-29 (Aug 2022)
-> that operation is handled by `terra` instead, so the dependency was simply
-> stale. Plot output is unchanged.
+> Earlier versions of these instructions asked you to install `geos` and
+> `rgeos` manually first. That is no longer needed &mdash; see `NEWS.md`.
 
 ## Usage examples - rooted trees
 
