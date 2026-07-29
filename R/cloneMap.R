@@ -1603,27 +1603,31 @@ make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , p
 ###########################################
 
 # function to extract (x = row, y = col) coordinates from TRUE in boolean matrix #
+# R matrices are stored column-major, so index i sits at row ((i-1) %% nrow) + 1 #
+# and column ((i-1) %/% nrow) + 1                                               #
 
 matrix.index.to.coordinates <- function( matrix.index, nrow, ncol ){
-  
-  return( data.frame( x = (matrix.index %% nrow), y = floor( matrix.index / ncol ) + 1, stringsAsFactors = F) )
-  
+
+  return( data.frame( x = ( ( matrix.index - 1 ) %% nrow ) + 1,
+                      y = ( ( matrix.index - 1 ) %/% nrow ) + 1, stringsAsFactors = F) )
+
 }
 
 # function to convert (x = row, y = col) coordinates into a boolean matrix #
 # can input either single coordinate or data.frame of coordinates also     #
 # need to input matrix outline (number of cols and rows)                   #
+# inverse of matrix.index.to.coordinates, hence also column-major          #
 
 coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
-  
+
   if( any(class(coordinates)=="numeric") ){
-    return( ( ( coordinates[1] - 1 ) * ncol ) + coordinates[2] )
+    return( ( ( coordinates[2] - 1 ) * nrow ) + coordinates[1] )
   }
-  
+
   if( any(class(coordinates)=="data.frame") ){
-    return( ( ( coordinates$x - 1 ) * ncol ) + coordinates$y )
+    return( ( ( coordinates$y - 1 ) * nrow ) + coordinates$x )
   }
-  
+
 }
 
 # function to test whether a specific clone in a raster matrix of clone positions is entirely continuous #
