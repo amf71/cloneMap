@@ -19,6 +19,9 @@ Imports:
 	raster (>= 3.5-29),
 	RColorBrewer,
 	grDevices,
+	methods,
+	stats,
+	utils,
 	vegan
 URL: https://github.com/amf71/cloneMap
 BugReports: https://github.com/amf71/cloneMap/issues

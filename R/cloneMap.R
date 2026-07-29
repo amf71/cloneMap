@@ -398,7 +398,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         rasterPlot <- raster::raster( clones_rasterised_plot )
         
         #set up plot extent
-        raster::plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
+        raster::plot( set.up.plot.extent( rasterPlot ), col = NA, border = NA) ## Function specified below
         
         plot <- suppressMessages( sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){x == 1000}, dissolve = TRUE) ) )
         
@@ -583,7 +583,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
       rasterPlot <- raster::raster( clones_rasterised_plot )
       
       # set up plot extent #
-      if( tissue_border == FALSE ) raster::plot( raster::rasterToPolygons( rasterPlot ), col = NA, border = NA) 
+      if( tissue_border == FALSE ) raster::plot( set.up.plot.extent( rasterPlot ), col = NA, border = NA) ## Function specified below
       
       for( root.clone in root){
       
@@ -953,22 +953,23 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
         if( track ) message( paste0( "\n        ", "plotting subclones..." ) )
         
         # loop round daughters of this parent clone and plot each of them #
-        
+
+        # the raster is the same for every daughter, so build it once outside the loop #
+        # ensure raster is numeric #
+        clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
+
+        # convert to class raster #
+        rasterPlot <- raster::raster( clones_rasterised_plot )
+
         for(clone in daughters){
-          
+
           # adjust the smoothing parameter depending on clone size
           clone_radius <- sqrt( CCF.data[ CCF.data$clone == clone, "area" ] / 3.14 )
           clone_radius_fraction <-  clone_radius / resolution.index
           # reduce affect of clone size as lower resolution with small clones causes bumps
           clone_radius_fraction <- ((1 - clone_radius_fraction) / 10 ) + clone_radius_fraction
           smoothing.par.plot <- smoothing.par * clone_radius_fraction
-          
-          # ensure raster is numeric #
-          clones_rasterised_plot <- apply( clones_rasterised, 1, as.numeric )
-          
-          # convert to class raster #
-          rasterPlot <- raster::raster( clones_rasterised_plot )
-          
+
           plot <- sf::st_as_sf( raster::rasterToPolygons( rasterPlot, function(x){ x == clone }, dissolve = TRUE) )
           plot.smooth <- smoothr::smooth(plot, method = "ksmooth", smoothness = smoothing.par.plot) # smoothing par specified in arguemnts
           raster::plot( plot.smooth, col = clone.cols[ names(clone.cols) == clone], border = border.colour, lwd = border.thickness, add = TRUE ) # border thickness specified in arguemnts and col can be specified in arguments
@@ -1033,9 +1034,9 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
     # for each clone in the tree (trunk -> leaves) plots the area this occupies including all its daughters #
     
     clones_rasterised_blank <- clones_rasterised
-    clones_rasterised_blank[] <- 0 
+    clones_rasterised_blank[] <- 0
     clones_rasterised_blank <- apply( clones_rasterised_blank, 1, as.numeric )
-    blank.plot <- raster::rasterToPolygons( raster::raster( clones_rasterised_blank ) )
+    blank.plot <- set.up.plot.extent( raster::raster( clones_rasterised_blank ) ) ## Function specified below
     raster::plot( blank.plot, col = NA, border = NA ) # set up plot extent
     
     # signpost #
@@ -1171,6 +1172,18 @@ make.distance.matrix <- function( matrix.outline , nucleus , type = "octoagon" )
   #########
   ## END ##
   #########
+
+}
+
+
+## function to set up the plot region to match a raster's extent.                      ##
+## Only the bounding box matters here, so return a single rectangle polygon rather     ##
+## than rasterToPolygons()' one polygon per cell (10,000 for a 100 x 100 raster).      ##
+## Both give the same bounding box and hence the same plot region.                     ##
+
+set.up.plot.extent <- function( rasterPlot ){
+
+  return( methods::as( raster::extent( rasterPlot ), "SpatialPolygons" ) )
 
 }
 
@@ -1577,63 +1590,81 @@ coordinates.to.matrix.index <- function(coordinates, nrow, ncol){
 
 continuous.test <- function( clone_position ){
 
-  # get coordinates of all position for this clone #
-  coords <- matrix.index.to.coordinates( which( clone_position ), nrow = nrow( clone_position ), ncol = ncol( clone_position ) )  # matrix.index.to.coordinates specified above
-  coords_ids <- paste(coords[, "x"] , coords[, "y"], sep = "_" )
-  
-  # make as list #
-  coords.list <- lapply( 1:nrow( coords ), function(i) coords[ i ,])
-  
-  
-  # get surrounding cords coordinates for each coord #
-  coords.surrounding.id.list <- lapply( coords.list, function(coord) c( paste( coord$x + 1, coord$y, sep = "_" ),
-                                                                        paste( coord$x - 1, coord$y, sep = "_" ),
-                                                                        paste( coord$x, coord$y + 1, sep = "_" ),
-                                                                        paste( coord$x, coord$y - 1, sep = "_" ),
-                                                                        # diagonals # 
-                                                                        paste( coord$x + 1, coord$y - 1, sep = "_" ),
-                                                                        paste( coord$x + 1, coord$y + 1, sep = "_" ),
-                                                                        paste( coord$x - 1, coord$y - 1, sep = "_" ),
-                                                                        paste( coord$x - 1, coord$y + 1, sep = "_" ) ) )
-  
-  
+  # nothing to test if the clone has no positions #
+  if( !any( clone_position ) ) return( TRUE )
+
+  nrows <- nrow( clone_position )
+  ncols <- ncol( clone_position )
+
   # choose a position in clone at random #
   # get all its neighbours are in the clone, then all their neighbours recursively until # of coords is no longer increasing #
   # then check if we've captured all clone coords, if not then there must must be non-continuous islands #
-  
+
   # this also holds true for just the edges and this is faster so limit to these #
-  
+
   # identify edge positions #
   # these are those coords surrounded by at least 1 coord which is not part of the clone #
-  is_edge <- sapply( 1:length( coords.list ), function(i) any( !coords.surrounding.id.list[[i]] %in% coords_ids  ) )
-  
-  # now make a lists of all the edge coords and their surrounding coords #
-  coords_ids_edge <- coords_ids[ which( is_edge ) ]
-  coords_edge_surrounding_id_list <- coords.surrounding.id.list[ is_edge ]
-  
+  # pad with FALSE so positions on the matrix border count as edges, then a position is  #
+  # an edge unless all eight of its neighbours are also part of the clone                #
+  padded <- matrix( FALSE, nrows + 2, ncols + 2 )
+  padded[ 2:( nrows + 1 ), 2:( ncols + 1 ) ] <- clone_position
+
+  rows_up <- 1:nrows ; rows_mid <- 2:( nrows + 1 ) ; rows_down <- 3:( nrows + 2 )
+  cols_left <- 1:ncols ; cols_mid <- 2:( ncols + 1 ) ; cols_right <- 3:( ncols + 2 )
+
+  all_neighbours_in_clone <-
+    padded[ rows_up,   cols_left  ] & padded[ rows_up,   cols_mid   ] & padded[ rows_up,   cols_right ] &
+    padded[ rows_mid,  cols_left  ] &                                   padded[ rows_mid,  cols_right ] &
+    padded[ rows_down, cols_left  ] & padded[ rows_down, cols_mid   ] & padded[ rows_down, cols_right ]
+
+  is_edge <- clone_position & !all_neighbours_in_clone
+
+  edge.index <- which( is_edge )
+
   # chose an edge coord at random #
-  edges_continuous <- coords_ids_edge[[ sample( 1:length( coords_ids_edge ), 1 ) ]]
-  
+  # (which edge is chosen cannot change the result, but the draw is kept so that seeded
+  #  runs consume the random number stream exactly as before)
+  start.index <- edge.index[[ sample( 1:length( edge.index ), 1 ) ]]
+
+  # walk out from that edge position to every edge position reachable through neighbouring
+  # edge positions, one whole front at a time so each step stays vectorised
+  reached <- logical( nrows * ncols )
+  reached[ start.index ] <- TRUE
+  front <- start.index
+
   repeat{
-    # add neighbouring edges #
-    
-    neighbours.index <- which( sapply(coords_edge_surrounding_id_list, function( surronding_coords ) any( surronding_coords %in% edges_continuous )) )
-    
-    edges_continuous_new <- unique( c( edges_continuous, coords_ids_edge[ neighbours.index ] ) )
-    
-    if( length(edges_continuous_new) == length(edges_continuous) ) break
-    
-    edges_continuous <- edges_continuous_new
-    
+
+    # rows and columns of the current front #
+    front.rows <- ( ( front - 1L ) %% nrows ) + 1L
+    front.cols <- ( ( front - 1L ) %/% nrows ) + 1L
+
+    # all eight neighbours of every position in the front #
+    neighbour.rows <- c( front.rows - 1L, front.rows - 1L, front.rows - 1L, front.rows,
+                         front.rows,      front.rows + 1L, front.rows + 1L, front.rows + 1L )
+    neighbour.cols <- c( front.cols - 1L, front.cols,      front.cols + 1L, front.cols - 1L,
+                         front.cols + 1L, front.cols - 1L, front.cols,      front.cols + 1L )
+
+    # drop neighbours that fall outside the matrix #
+    in.matrix <- neighbour.rows >= 1L & neighbour.rows <= nrows &
+                 neighbour.cols >= 1L & neighbour.cols <= ncols
+    neighbour.index <- ( neighbour.cols[ in.matrix ] - 1L ) * nrows + neighbour.rows[ in.matrix ]
+
+    # keep the ones that are edges of this clone and have not been reached yet #
+    front <- unique( neighbour.index[ is_edge[ neighbour.index ] & !reached[ neighbour.index ] ] )
+
+    if( length( front ) == 0 ) break
+
+    reached[ front ] <- TRUE
+
   }
-  
+
   # are all edge coords contained in these continuous edges from this nucleation? #
-  is_continuous <- all( coords_ids_edge %in% edges_continuous ) 
-  
+  is_continuous <- sum( reached ) == length( edge.index )
+
   # if so must be continuous #
-  
+
   return( is_continuous)
-  
+
 }
 
 # function to recenter distance matrix  #
