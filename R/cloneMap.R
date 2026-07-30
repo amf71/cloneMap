@@ -94,9 +94,17 @@
 #' Default is FALSE. 
 #' 
 #' 
-#' @return A `clone_map` object will be returned if `output.Clone.map.obj` is TRUE
-#' containing information on clonal positions and tree structure. This output can 
-#' be inputted using the `clone_map` argument to repeat the same plot many times.
+#' @return If `output.Clone.map.obj` is TRUE, an object of class `"Clone map"`:
+#' a list containing the raster matrix of clone positions (`clone_matrix`), the
+#' tree as supplied (`tree`) and with internal clone names (`tree_internal`),
+#' the mapping between the two (`names_match`), the corrected CCF table
+#' (`CCFs`), and the Shannon and Simpson diversities of clonal prevalence
+#' (`shannon_diversity`, `simpson_diversity`). Passing this object back via the
+#' `clone_map` argument reproduces the same plot, which is otherwise
+#' semi-random, and is much faster than recomputing it.
+#'
+#' If `output.Clone.map.obj` is FALSE (the default) the function is called for
+#' its side effect of drawing a plot and returns NULL invisibly.
 #' 
 #' @author 
 #' 
@@ -107,19 +115,26 @@
 #'
 #' # These examples pass a reduced resolution.index so that they run quickly. #
 #' # The default of 100 gives smoother, publication quality output and is what #
-#' # you would normally use - see the last example below. #
+#' # you would normally use - see the donttest examples below. #
 #'
-#' cloneMap( tree_example, CCFs_example_1, resolution.index = 40 )
+#' # a rooted tree, as from a tumour #
+#'
 #' cloneMap( tree_example, CCFs_example_2, resolution.index = 40 )
 #'
+#' # a tree containing unrelated clones, i.e. an unrooted tree, as is common #
+#' # in data derived from normal tissues #
 #'
-#' # Use a clone_map object to  plot cloneMap reproducibility #
+#' cloneMap( tree.mat = tree_example_poly,
+#'           CCF.data = CCF_example_poly,
+#'           resolution.index = 40 )
+#'
+#' \donttest{
+#' # Use a clone_map object to plot cloneMaps reproducibly #
 #' # generating the clone_map is the slow step, so replotting from one is quick #
 #'
 #' clone_map_eg <- cloneMap( tree_example, CCFs_example_2, resolution.index = 40,
 #'                           output.Clone.map.obj = TRUE, plot.data = FALSE )
 #' cloneMap( clone_map = clone_map_eg )
-#'
 #'
 #' # specify colours #
 #' # plot two samples from the same tumour so the clone colours match #
@@ -129,28 +144,23 @@
 #' cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example,
 #'           resolution.index = 40 )
 #'
-#' # Can also be used with tree containing unrelated clones i.e. unrooted trees #
-#' # such as is common is data derived from normal tissues: #
+#' # add a border around the plot area to make clearer the % of the tissue #
+#' # containing mutant clones #
 #'
 #' cloneMap( tree.mat = tree_example_poly,
-#' CCF.data = CCF_example_poly,
-#' resolution.index = 40 )
-#'
-#' cloneMap( tree.mat = tree_example_poly,
-#' CCF.data = CCF_example_poly,
-#' tissue_border = TRUE,
-#' resolution.index = 40 )
+#'           CCF.data = CCF_example_poly,
+#'           tissue_border = TRUE,
+#'           resolution.index = 40 )
 #'
 #' # Here space_fraction indicates that 70% of the plot area should be white space #
 #' # indicating that only 70% of cells are wild type.
 #'
 #' cloneMap( tree.mat = tree_example_poly,
-#' CCF.data = CCF_example_poly,
-#' tissue_border = TRUE,
-#' space_fraction = 0.7,
-#' resolution.index = 40 )
+#'           CCF.data = CCF_example_poly,
+#'           tissue_border = TRUE,
+#'           space_fraction = 0.7,
+#'           resolution.index = 40 )
 #'
-#' \donttest{
 #' # the default resolution.index of 100, as you would use for a figure #
 #'
 #' cloneMap( tree_example, CCFs_example_2 )
@@ -464,7 +474,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
                                                                                                   length(root)), ] )
       
       # for each possible nuclei set work out the closest distance between any two nuclei #
-      nucleus.options.min.dists <- sapply( nucleus.options.sel, min.nuclei.distance ) ## Function specified below
+      nucleus.options.min.dists <- sapply( nucleus.options.sel, min_nuclei_distance ) ## Function specified below
 
       # select the set of nuclei with the maximum distance
       max_dist_i <- which( nucleus.options.min.dists == max( nucleus.options.min.dists, na.rm = T ))[1]
@@ -726,7 +736,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), length(daughters) ), ] )
           
           # for each possible nuclei set work out the closest distance between any two nuclei #
-          nucleus.options.min.dists <- sapply( nucleus.options.sel, min.nuclei.distance ) ## Function specified below
+          nucleus.options.min.dists <- sapply( nucleus.options.sel, min_nuclei_distance ) ## Function specified below
 
           # space clones out as much as possible if >2 and total CCF is high #
           # If total CCF is < 50% of parent very unlikely the clones won't be continuous # 
@@ -1108,6 +1118,10 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
 #' 
 #' @param brewer.palette a discrete brewer palette to be used for the colours (default is 'Paired')
 #' 
+#' @return A character vector of hexadecimal colours, one per entry of
+#' `clones`, named by those clone names. This is the form expected by the
+#' `clone.cols` argument of [cloneMap()].
+#'
 #' @export
 make_clone_col_input <- function( clones, brewer.palette = "Paired" ){
   
@@ -1201,7 +1215,7 @@ set.up.plot.extent <- function( rasterPlot ){
 ## rows + columns, matching make.distance.matrix( type = "square" ), which is the      ##
 ## Manhattan distance between the coordinates                                          ##
 
-min.nuclei.distance <- function( nucleus.option ){
+min_nuclei_distance <- function( nucleus.option ){
 
   # a single nucleus has nothing to be spaced from #
   if( nrow( nucleus.option ) < 2 ) return( Inf )
@@ -1214,6 +1228,11 @@ min.nuclei.distance <- function( nucleus.option ){
 #' function to order tree root -> branches -> leaves
 #'
 #' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
+#'
+#' @return A two column phylogenetic tree matrix containing the same
+#' parent-daughter relationships as `tree`, with the rows reordered so that
+#' each clone appears after its parent, i.e. root first, then branches, then
+#' leaves.
 #'
 #' @export
 logically.order.tree <- function( tree ){
@@ -1308,6 +1327,9 @@ logically.order.tree <- function( tree ){
 #' a parent has a lower CCF than its daughters). If TRUE parents are increased to match the total CCF of
 #' their daughters; if FALSE the CCF of daughters is decreased proportionally to match their parent.
 #' 
+#' @return A single numeric value giving the diversity of clonal prevalences,
+#' calculated by [vegan::diversity()] using the index named by `method`.
+#'
 #' @export
 calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon', inc_parents_ccf = TRUE ){
   
@@ -1351,6 +1373,11 @@ calc_clonal_diversity <- function( CCF.data, tree, method = 'shannon', inc_paren
 #' 
 #' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
 #' 
+#' @return A vector of the names of all clones descended from `parent.clones`,
+#' at any depth, excluding the parent clones themselves.
+#'
+#' @keywords internal
+#' 
 extract_daughters <- function( tree, parent.clones ){
   
   daughters <- unique( c(tree[ tree[,1] %in% parent.clones, 2], parent.clones) )
@@ -1373,6 +1400,11 @@ extract_daughters <- function( tree, parent.clones ){
 #' convention of this package
 #' 
 #' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
+#'
+#' @return A vector of root clone names, of the same type as the entries of
+#' `tree`. This has length one for a rooted tree and length greater than one
+#' for an unrooted (polyclonal) tree, where each unrelated clone is its own
+#' root.
 #'
 #' @export 
 find_root <- function( tree ){
@@ -1399,6 +1431,11 @@ find_root <- function( tree ){
 #' @param clones.to.remove a vector of clones which you wish to remove from the tree
 #' 
 #' @param clones.to.keep a vector of clones which you wish to keep i.e. remove all other clones from the tree
+#'
+#' @return A two column phylogenetic tree matrix, of the same form as `tree`,
+#' with the specified clones removed. Where an intermediate (branch) clone is
+#' removed its daughters are reattached to its parent, so ancestral
+#' relationships between the remaining clones are preserved.
 #'
 #' @export
 remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = NA){
@@ -1484,6 +1521,13 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
 #'
 #' @param clone_names Optional character vector of clone names to restrict the output to. If NA
 #' (the default) all clones present in the tree are returned.
+#'
+#' @return A data frame of corrected CCFs with the same columns as `CCF.data`
+#' (`clones` and `CCF`), in which parent CCFs have been increased and/or
+#' daughter CCFs decreased so that no parent has a lower CCF than the sum of
+#' its daughters. For a rooted tree the CCFs are rescaled so the root clone
+#' returns to a CCF of 1. If `clone_names` is supplied the rows are restricted
+#' to those clones.
 #'
 #' @export
 make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , parent.adjust = 1,

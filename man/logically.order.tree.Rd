@@ -9,6 +9,12 @@ logically.order.tree(tree)
 \arguments{
 \item{tree}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
 }
+\value{
+A two column phylogenetic tree matrix containing the same
+parent-daughter relationships as `tree`, with the rows reordered so that
+each clone appears after its parent, i.e. root first, then branches, then
+leaves.
+}
 \description{
 function to order tree root -> branches -> leaves
 }

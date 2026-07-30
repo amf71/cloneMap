@@ -13,6 +13,12 @@ remove.clones.on.tree(tree, clones.to.remove = NA, clones.to.keep = NA)
 
 \item{clones.to.keep}{a vector of clones which you wish to keep i.e. remove all other clones from the tree}
 }
+\value{
+A two column phylogenetic tree matrix, of the same form as `tree`,
+with the specified clones removed. Where an intermediate (branch) clone is
+removed its daughters are reattached to its parent, so ancestral
+relationships between the remaining clones are preserved.
+}
 \description{
 This maintains parent -> daughter relationships,  even if an intermediate
 (branch) clone is being removed

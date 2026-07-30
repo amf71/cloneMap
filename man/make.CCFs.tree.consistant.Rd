@@ -36,6 +36,14 @@ CCF > parent CCF}
 \item{clone_names}{Optional character vector of clone names to restrict the output to. If NA
 (the default) all clones present in the tree are returned.}
 }
+\value{
+A data frame of corrected CCFs with the same columns as `CCF.data`
+(`clones` and `CCF`), in which parent CCFs have been increased and/or
+daughter CCFs decreased so that no parent has a lower CCF than the sum of
+its daughters. For a rooted tree the CCFs are rescaled so the root clone
+returns to a CCF of 1. If `clone_names` is supplied the rows are restricted
+to those clones.
+}
 \description{
 Function to correct CCFs when sum of daughter CCFs > parent CCF
 }
