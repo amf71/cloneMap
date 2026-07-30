@@ -102,7 +102,7 @@ Simple map:
 cloneMap( tree_example_1, CCFs_example_1 )
 ```
 
-![example1](data-raw/example_outputs/example_1.png)
+![example1](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_1.png)
 
 More complex map:
 
@@ -110,7 +110,7 @@ More complex map:
 cloneMap( tree_example_2, CCFs_example_2 )
 ```
 
-![example2](data-raw/example_outputs/example_2.png)
+![example2](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_2.png)
 
 
 Use a clone_map object to  plot cloneMaps reproducably and much faster:
@@ -120,7 +120,7 @@ clone_map_eg <- cloneMap( tree_example_2, CCFs_example_2, output.Clone.map.obj =
 cloneMap( clone_map = clone_map_eg )
 ```
 
-![example3](data-raw/example_outputs/example_3.png)
+![example3](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_3.png)
 
 
 Specify the same clone colours accross several plots:
@@ -130,7 +130,7 @@ cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example )
 cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example )
 ```
 
-![example4](data-raw/example_outputs/example_4.png)
+![example4](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_4.png)
 
 
 ## Usage examples - unrooted trees
@@ -183,7 +183,7 @@ cloneMap( tree.mat = tree_example_poly,
           CCF.data = CCF_example_poly )
 ```
           
-![example_polyclonal](data-raw/example_outputs/example_polyclonal.png)
+![example_polyclonal](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_polyclonal.png)
 
 
 Plot map of polyclonal data similar to that found in normal tissues with border around
@@ -195,7 +195,7 @@ cloneMap( tree.mat = tree_example_poly,
           tissue_border = TRUE)
 ```
 
-![example_polyclonal border](data-raw/example_outputs/example_polyclonal_border.png)
+![example_polyclonal border](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_polyclonal_border.png)
 
 
 Plot map of polyclonal data similar to that found in normal tissues with border with sparsely 
@@ -209,7 +209,7 @@ cloneMap( tree.mat = tree_example_poly,
           space_fraction = 0.7 )
 ```
        
-![example_polyclonal spaced](data-raw/example_outputs/example_polyclonal_spaced.png)
+![example_polyclonal spaced](https://raw.githubusercontent.com/amf71/cloneMap/master/data-raw/example_outputs/example_polyclonal_spaced.png)
 
 
 
