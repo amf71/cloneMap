@@ -1,7 +1,7 @@
 Package: cloneMap
 Title: Visual Representations of the Spatial Distribution of Somatic Clones
-Version: 1.0.1
-Date: 2026-07-29
+Version: 1.0.2
+Date: 2026-07-30
 Authors@R: 
     person(given = "Alexander M",
            family = "Frankell",
@@ -9,7 +9,12 @@ Authors@R:
            email = "alexander.frankell@crick.ac.uk",
            comment = c(ORCID = "0000-0002-0341-7878"))
 Maintainer: Alexander M Frankell <alexander.frankell@crick.ac.uk>
-Description: Makes representations of somatic clones present in a tissue accounting for clone size, i.e. the Cancer Cell Fraction (CCF), and for phylogenetic relationships between clones in a semi-randomised but reproducible manner.
+Description: Makes representations of somatic clones present in a tissue
+    accounting for clone size, i.e. the Cancer Cell Fraction (CCF), and for
+    phylogenetic relationships between clones in a semi-randomised but
+    reproducible manner. The method is described in the companion preprint,
+    Frankell et al. (2022) 'cloneMap: a R package to visualise clonal
+    heterogeneity', bioRxiv <doi:10.1101/2022.07.26.501523>.
 License: MIT + file LICENCE
 Encoding: UTF-8
 LazyData: true
@@ -23,8 +28,11 @@ Imports:
 	stats,
 	utils,
 	vegan
+Suggests:
+	testthat (>= 3.0.0)
 URL: https://github.com/amf71/cloneMap
 BugReports: https://github.com/amf71/cloneMap/issues
 Depends: 
     R (>= 2.10)
 Config/roxygen2/version: 8.0.0
+Config/testthat/edition: 3

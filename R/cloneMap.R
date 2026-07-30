@@ -717,6 +717,11 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           if( repeati > 2 ){
             nucleus.options <- parent.dist.mat > (parent_distance_cutoff * 0.4) & parent.dist.mat < (parent_distance_cutoff * 0.8) & clones_rasterised_parent == parent
           } 
+          # the annulus above can be empty for a small parent or a coarse raster. Fall back to #
+          # any position within the parent, otherwise sample( 1:0, ... ) below would return an #
+          # out of range index and place a nucleus outside the parent                          #
+          if( !any( nucleus.options ) ) nucleus.options <- clones_rasterised_parent == parent
+
           # convert raster matrix TRUE positions to cordinates for possible nucleation #
           nucleus.options <- matrix.index.to.coordinates( matrix.index = which( nucleus.options ), nrow = nrow( clones_rasterised ), ncol = ncol( clones_rasterised ) ) ## Function specified below
           
@@ -733,7 +738,7 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           if( length(daughters) == 1) nuclei_sample_number = 1
           
           # get x / y coordinates in raster for possible clone nuclei
-          nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( 1:nrow( nucleus.options ), length(daughters) ), ] )
+          nucleus.options.sel <- lapply( 1:nuclei_sample_number, function(x) nucleus.options[ sample( seq_len( nrow( nucleus.options ) ), length(daughters), replace = nrow( nucleus.options ) < length(daughters) ), ] )
           
           # for each possible nuclei set work out the closest distance between any two nuclei #
           nucleus.options.min.dists <- sapply( nucleus.options.sel, min_nuclei_distance ) ## Function specified below
@@ -769,7 +774,16 @@ cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone
           
           # if only one daughter clone just place somewhere very near the center (0.3 * distance to edge) of the parent #
           nucleus.options <- which( parent.dist.mat < (parent_distance_cutoff * 0.3) & clones_rasterised_parent == parent )
-          nucleus.options <- nucleus.options[ sample( 1:length( nucleus.options ), 1 ) ]
+
+          # for a small parent, or a coarse raster, no position may fall inside that radius. #
+          # sample( 1:0, 1 ) would then return an out of range index and the nucleus would    #
+          # land outside the parent, so fall back to the most central position(s) available.  #
+          if( length( nucleus.options ) == 0 ){
+            in.parent <- which( clones_rasterised_parent == parent )
+            nucleus.options <- in.parent[ parent.dist.mat[ in.parent ] == min( parent.dist.mat[ in.parent ] ) ]
+          }
+
+          nucleus.options <- nucleus.options[ sample( seq_along( nucleus.options ), 1 ) ]
           nuclei <- matrix.index.to.coordinates( nucleus.options, nrow = nrow( clones_rasterised ), ncol = ncol( clones_rasterised ) )
           nuclei <- lapply(1:nrow(nuclei), function(x) as.numeric(nuclei[x,]))
           names(nuclei) <- daughters
@@ -1230,9 +1244,9 @@ min_nuclei_distance <- function( nucleus.option ){
 #' @param tree a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)
 #'
 #' @return A two column phylogenetic tree matrix containing the same
-#' parent-daughter relationships as `tree`, with the rows reordered so that
-#' each clone appears after its parent, i.e. root first, then branches, then
-#' leaves.
+#' parent-daughter relationships as `tree`, with the rows reordered from root
+#' to leaves: every clone appears as a daughter only after the row in which it
+#' appears as a parent, except for root clones, which have no parent.
 #'
 #' @export
 logically.order.tree <- function( tree ){
@@ -1475,7 +1489,9 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
   root <- tree[ 1, 1 ]
   
   # if only the root left then return root as parent and daughter to maintain the same structure #
-  if(all(clones.to.keep==root)){
+  # length check first: clones.to.keep is empty when clones.to.remove was supplied instead, and  #
+  # all() on an empty vector is vacuously TRUE, which would discard the rest of the tree         #
+  if(length(clones.to.keep) > 0 && all(clones.to.keep==root)){
     return(matrix(c(root,root),ncol = 2, byrow = TRUE))
   }
   
@@ -1519,15 +1535,17 @@ remove.clones.on.tree <- function(tree, clones.to.remove = NA, clones.to.keep = 
 #' @param increase.parents Do you want to increase the parent CCF to account for instances where daughter 
 #' CCF > parent CCF
 #'
-#' @param clone_names Optional character vector of clone names to restrict the output to. If NA
-#' (the default) all clones present in the tree are returned.
+#' @param clone_names Optional data frame mapping the internal clone names used
+#' during plotting to the original user-supplied ones, with columns `internal`
+#' and `orig`. It is used only to report original clone names in warning
+#' messages; it does not change the values returned. If NA (the default)
+#' internal names are used in those warnings.
 #'
 #' @return A data frame of corrected CCFs with the same columns as `CCF.data`
 #' (`clones` and `CCF`), in which parent CCFs have been increased and/or
 #' daughter CCFs decreased so that no parent has a lower CCF than the sum of
 #' its daughters. For a rooted tree the CCFs are rescaled so the root clone
-#' returns to a CCF of 1. If `clone_names` is supplied the rows are restricted
-#' to those clones.
+#' returns to a CCF of 1.
 #'
 #' @export
 make.CCFs.tree.consistant <- function( tree.mat, CCF.data, warning.limit = 1 , parent.adjust = 1,
