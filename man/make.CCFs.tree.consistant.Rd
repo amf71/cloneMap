@@ -33,8 +33,18 @@ CCF > parent CCF}
 \item{increase.parents}{Do you want to increase the parent CCF to account for instances where daughter 
 CCF > parent CCF}
 
-\item{clone_names}{Optional character vector of clone names to restrict the output to. If NA
-(the default) all clones present in the tree are returned.}
+\item{clone_names}{Optional data frame mapping the internal clone names used
+during plotting to the original user-supplied ones, with columns `internal`
+and `orig`. It is used only to report original clone names in warning
+messages; it does not change the values returned. If NA (the default)
+internal names are used in those warnings.}
+}
+\value{
+A data frame of corrected CCFs with the same columns as `CCF.data`
+(`clones` and `CCF`), in which parent CCFs have been increased and/or
+daughter CCFs decreased so that no parent has a lower CCF than the sum of
+its daughters. For a rooted tree the CCFs are rescaled so the root clone
+returns to a CCF of 1.
 }
 \description{
 Function to correct CCFs when sum of daughter CCFs > parent CCF

@@ -25,6 +25,10 @@ function of the `vegan` package and can be "shannon", "simpson" or "invsimpson"}
 a parent has a lower CCF than its daughters). If TRUE parents are increased to match the total CCF of
 their daughters; if FALSE the CCF of daughters is decreased proportionally to match their parent.}
 }
+\value{
+A single numeric value giving the diversity of clonal prevalences,
+calculated by [vegan::diversity()] using the index named by `method`.
+}
 \description{
 clonal prevalence indicates, for each clone,
 what percentage of cells actually contain its

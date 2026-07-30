@@ -102,9 +102,17 @@ which is available.}
 Default is FALSE.}
 }
 \value{
-A `clone_map` object will be returned if `output.Clone.map.obj` is TRUE
-containing information on clonal positions and tree structure. This output can 
-be inputted using the `clone_map` argument to repeat the same plot many times.
+If `output.Clone.map.obj` is TRUE, an object of class `"Clone map"`:
+a list containing the raster matrix of clone positions (`clone_matrix`), the
+tree as supplied (`tree`) and with internal clone names (`tree_internal`),
+the mapping between the two (`names_match`), the corrected CCF table
+(`CCFs`), and the Shannon and Simpson diversities of clonal prevalence
+(`shannon_diversity`, `simpson_diversity`). Passing this object back via the
+`clone_map` argument reproduces the same plot, which is otherwise
+semi-random, and is much faster than recomputing it.
+
+If `output.Clone.map.obj` is FALSE (the default) the function is called for
+its side effect of drawing a plot and returns NULL invisibly.
 }
 \description{
 Function to represent somatic clones present in a tissue accounting for clone
@@ -116,19 +124,26 @@ between clones
 
 # These examples pass a reduced resolution.index so that they run quickly. #
 # The default of 100 gives smoother, publication quality output and is what #
-# you would normally use - see the last example below. #
+# you would normally use - see the donttest examples below. #
 
-cloneMap( tree_example, CCFs_example_1, resolution.index = 40 )
+# a rooted tree, as from a tumour #
+
 cloneMap( tree_example, CCFs_example_2, resolution.index = 40 )
 
+# a tree containing unrelated clones, i.e. an unrooted tree, as is common #
+# in data derived from normal tissues #
 
-# Use a clone_map object to  plot cloneMap reproducibility #
+cloneMap( tree.mat = tree_example_poly,
+          CCF.data = CCF_example_poly,
+          resolution.index = 40 )
+
+\donttest{
+# Use a clone_map object to plot cloneMaps reproducibly #
 # generating the clone_map is the slow step, so replotting from one is quick #
 
 clone_map_eg <- cloneMap( tree_example, CCFs_example_2, resolution.index = 40,
                           output.Clone.map.obj = TRUE, plot.data = FALSE )
 cloneMap( clone_map = clone_map_eg )
-
 
 # specify colours #
 # plot two samples from the same tumour so the clone colours match #
@@ -138,28 +153,23 @@ cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example,
 cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example,
           resolution.index = 40 )
 
-# Can also be used with tree containing unrelated clones i.e. unrooted trees #
-# such as is common is data derived from normal tissues: #
+# add a border around the plot area to make clearer the \% of the tissue #
+# containing mutant clones #
 
 cloneMap( tree.mat = tree_example_poly,
-CCF.data = CCF_example_poly,
-resolution.index = 40 )
-
-cloneMap( tree.mat = tree_example_poly,
-CCF.data = CCF_example_poly,
-tissue_border = TRUE,
-resolution.index = 40 )
+          CCF.data = CCF_example_poly,
+          tissue_border = TRUE,
+          resolution.index = 40 )
 
 # Here space_fraction indicates that 70\% of the plot area should be white space #
 # indicating that only 70\% of cells are wild type.
 
 cloneMap( tree.mat = tree_example_poly,
-CCF.data = CCF_example_poly,
-tissue_border = TRUE,
-space_fraction = 0.7,
-resolution.index = 40 )
+          CCF.data = CCF_example_poly,
+          tissue_border = TRUE,
+          space_fraction = 0.7,
+          resolution.index = 40 )
 
-\donttest{
 # the default resolution.index of 100, as you would use for a figure #
 
 cloneMap( tree_example, CCFs_example_2 )

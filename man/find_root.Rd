@@ -9,6 +9,12 @@ find_root(tree)
 \arguments{
 \item{tree}{a phylogenetic tree matrix with two column specifying 'parent' (column 1) and child (column 2)}
 }
+\value{
+A vector of root clone names, of the same type as the entries of
+`tree`. This has length one for a rooted tree and length greater than one
+for an unrooted (polyclonal) tree, where each unrelated clone is its own
+root.
+}
 \description{
 Roots will have no daughters and aditionally when root
 has no daughters it is specified root -> root in the

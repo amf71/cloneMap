@@ -11,6 +11,11 @@ extract_daughters(tree, parent.clones)
 
 \item{parent.clones}{the name of the parent clone(s) for which you wish to find all daughters}
 }
+\value{
+A vector of the names of all clones descended from `parent.clones`,
+at any depth, excluding the parent clones themselves.
+}
 \description{
 function to extract all daughter clones from a parent using a phylogenetic tree
 }
+\keyword{internal}
