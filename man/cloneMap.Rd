@@ -113,21 +113,19 @@ between clones
 }
 \examples{
 # example objects provided in env after loading package #
-# a reduced resolution.index is used here to keep this example quick; #
-# the default (100) gives smoother, publication-quality output #
 
-cloneMap( tree_example, CCFs_example_1, resolution.index = 30 )
+# These examples pass a reduced resolution.index so that they run quickly. #
+# The default of 100 gives smoother, publication quality output and is what #
+# you would normally use - see the last example below. #
 
-\donttest{
-# full resolution (default) #
-
-cloneMap( tree_example, CCFs_example_1 )
-cloneMap( tree_example, CCFs_example_2 ) 
+cloneMap( tree_example, CCFs_example_1, resolution.index = 40 )
+cloneMap( tree_example, CCFs_example_2, resolution.index = 40 )
 
 
-# Use a clone_map object to reproduce a plot exactly, and much faster #
+# Use a clone_map object to  plot cloneMap reproducibility #
+# generating the clone_map is the slow step, so replotting from one is quick #
 
-clone_map_eg <- cloneMap( tree_example, CCFs_example_2, 
+clone_map_eg <- cloneMap( tree_example, CCFs_example_2, resolution.index = 40,
                           output.Clone.map.obj = TRUE, plot.data = FALSE )
 cloneMap( clone_map = clone_map_eg )
 
@@ -135,26 +133,36 @@ cloneMap( clone_map = clone_map_eg )
 # specify colours #
 # plot two samples from the same tumour so the clone colours match #
 
-cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example )
-cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example )
+cloneMap( tree_example, CCFs_example_1, clone.cols = clone_colours_example,
+          resolution.index = 40 )
+cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example,
+          resolution.index = 40 )
 
 # Can also be used with tree containing unrelated clones i.e. unrooted trees #
 # such as is common is data derived from normal tissues: #
 
-cloneMap( tree.mat = tree_example_poly, 
-CCF.data = CCF_example_poly )
-
-cloneMap( tree.mat = tree_example_poly, 
+cloneMap( tree.mat = tree_example_poly,
 CCF.data = CCF_example_poly,
-tissue_border = TRUE)
+resolution.index = 40 )
+
+cloneMap( tree.mat = tree_example_poly,
+CCF.data = CCF_example_poly,
+tissue_border = TRUE,
+resolution.index = 40 )
 
 # Here space_fraction indicates that 70\% of the plot area should be white space #
 # indicating that only 70\% of cells are wild type.
 
-cloneMap( tree.mat = tree_example_poly, 
+cloneMap( tree.mat = tree_example_poly,
 CCF.data = CCF_example_poly,
 tissue_border = TRUE,
-space_fraction = 0.7 )
+space_fraction = 0.7,
+resolution.index = 40 )
+
+\donttest{
+# the default resolution.index of 100, as you would use for a figure #
+
+cloneMap( tree_example, CCFs_example_2 )
 }
 
 }
