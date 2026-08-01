@@ -5,25 +5,32 @@ This is a first submission. cloneMap has not previously been on CRAN.
 ## Test environments
 
 * local macOS install (arm64, Apple silicon), R 4.5.3
-* win-builder, R devel -- NOT YET RUN
-* win-builder, R release -- NOT YET RUN
-* R-hub, Linux (Ubuntu, R release) -- NOT YET RUN
+* win-builder, R-devel (x86_64-w64-mingw32, Windows Server 2022) -- 1 NOTE
+* R-hub v2 (GitHub Actions), R-devel, Ubuntu 24.04 -- OK
+* R-hub v2 (GitHub Actions), R-devel, Windows Server 2022 -- OK
+* R-hub v2 (GitHub Actions), R-devel, macOS Sequoia 15.7.7 -- OK
 
 ## R CMD check results
 
-The local run reported 1 ERROR, 1 WARNING and 4 NOTEs. The ERROR and the
-WARNING are both the PDF reference manual failing to typeset, because the
-local machine has no LaTeX installation; they are not package faults and are
-detailed under "Local environment artefacts" below. No ERROR or WARNING arose
-from the package itself.
+There were no ERRORs or WARNINGs on any platform. All four remote platforms
+above ran the package's testthat suite (244 expectations) with no failures.
 
-Two NOTEs are expected to remain on a clean platform:
+The local macOS run reported 1 ERROR and 1 WARNING in addition to the NOTEs
+below; both are the PDF reference manual failing to typeset because that
+machine has no LaTeX installation, not a package fault, and did not reproduce
+on any of the four remote platforms. Detail under "Local environment
+artefacts".
+
+One NOTE is expected to remain on a clean platform:
 
 * checking CRAN incoming feasibility ... NOTE
 
       New submission
 
-  Expected: the package has not been on CRAN before.
+  Expected: the package has not been on CRAN before. Seen on win-builder;
+  not shown by R-hub's --as-cran run.
+
+The local macOS run additionally raised:
 
 * checking CRAN incoming feasibility ... NOTE
 
@@ -32,9 +39,9 @@ Two NOTEs are expected to remain on a clean platform:
 
   The iD is correct. Its check digit was verified against the ISO 7064
   MOD 11-2 scheme that ORCID uses, and it validates. The note is raised
-  because the machine used for local testing had no network access to
-  orcid.org, so the validator could not confirm the iD against the
-  register.
+  because the local machine had no network access to orcid.org, so the
+  validator could not confirm the iD against the register; win-builder and
+  R-hub, which do have network access, did not raise it.
 
 ## Local environment artefacts
 
