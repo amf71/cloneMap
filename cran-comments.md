@@ -11,7 +11,11 @@ This is a first submission. cloneMap has not previously been on CRAN.
 
 ## R CMD check results
 
-There were no ERRORs and no WARNINGs.
+The local run reported 1 ERROR, 1 WARNING and 4 NOTEs. The ERROR and the
+WARNING are both the PDF reference manual failing to typeset, because the
+local machine has no LaTeX installation; they are not package faults and are
+detailed under "Local environment artefacts" below. No ERROR or WARNING arose
+from the package itself.
 
 Two NOTEs are expected to remain on a clean platform:
 
@@ -38,11 +42,14 @@ These were seen on the local test machine only. They are properties of that
 machine rather than of the package, and are not expected on CRAN's check
 machines. They are listed for completeness.
 
+* The ERROR and WARNING on the PDF reference manual -- no LaTeX installation
+  is available locally, so the manual cannot be typeset here. All 17 Rd files
+  parse and convert to LaTeX without error, checked with `tools::parse_Rd()`
+  and `tools::Rd2latex()`.
+* A NOTE on `cloneMap-manual.tex` being left in the check directory -- a
+  by-product of the failed PDF step above.
 * `checking for future file timestamps ... NOTE: unable to verify current
   time` -- the local machine has no network access to the time service.
-* An ERROR building the PDF reference manual -- no LaTeX installation is
-  available locally, so the manual cannot be typeset here. The Rd sources
-  themselves parse without error.
 * A NOTE on the HTML version of the manual -- the local HTML Tidy predates
   the version R checks against.
 
