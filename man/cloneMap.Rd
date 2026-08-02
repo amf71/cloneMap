@@ -122,7 +122,7 @@ between clones
 \examples{
 # example objects provided in env after loading package #
 
-# These examples pass a reduced resolution.index so that they run quickly. #
+# This example passes a reduced resolution.index so that it runs quickly. #
 # The default of 100 gives smoother, publication quality output and is what #
 # you would normally use - see the donttest examples below. #
 
@@ -130,6 +130,7 @@ between clones
 
 cloneMap( tree_example, CCFs_example_2, resolution.index = 40 )
 
+\donttest{
 # a tree containing unrelated clones, i.e. an unrooted tree, as is common #
 # in data derived from normal tissues #
 
@@ -137,7 +138,6 @@ cloneMap( tree.mat = tree_example_poly,
           CCF.data = CCF_example_poly,
           resolution.index = 40 )
 
-\donttest{
 # Use a clone_map object to plot cloneMaps reproducibly #
 # generating the clone_map is the slow step, so replotting from one is quick #
 
