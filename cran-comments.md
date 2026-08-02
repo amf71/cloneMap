@@ -10,17 +10,26 @@ checks on the Debian flavour with an examples-timing NOTE:
               user system elapsed
     cloneMap 5.834  0.195   6.033
 
-None of local macOS, win-builder Windows, or R-hub's Ubuntu/Windows/macOS
-runs (below) had reproduced this -- the two live examples ran in under a
-second of CPU time combined on all of them, and the total including package
-load stayed under 5s. CRAN's own Debian checker is evidently slower or more
-loaded than any of those, and the previous margin (two live examples at
-resolution.index = 40) was not enough. Rather than trim resolution further
-against an unmeasured target, the second live example (the unrooted-tree
-case) has been moved into `\donttest{}`, leaving one live example. This
-removes essentially all of the package's own contribution to examples time,
-so the only remaining component is R's fixed one-off package/namespace load,
-which cannot trigger this NOTE on its own.
+The cause was that the package declared its dependencies in `Imports:` but
+called them only as `raster::`, `sf::`, `smoothr::` and `vegan::`, with no
+`importFrom` directives in NAMESPACE. Those namespaces therefore loaded
+lazily at first use -- inside the first `cloneMap()` call, and so inside the
+block `R CMD check` times for examples. Around 2.5s of the reported time was
+raster/terra/sf initialisation rather than any work the example does.
+
+The imports are now declared, which moves that cost into
+`library(cloneMap)`, where it is not counted against the examples budget.
+The unrooted-tree example was also moved into `\donttest{}`, leaving one
+live example.
+
+Measured with the `--run-donttest` pass disabled, so that the timings file
+records the live examples rather than being overwritten by the donttest run,
+user+system time for the `cloneMap` topic falls from 3.19s to 0.68s on the
+test machine. That machine measured 3.72s for the same tarball CRAN measured
+at 6.03s, a factor of 1.62; at that factor the current figure projects to
+roughly 1.1s, against 5.2s for the intermediate fix that trimmed the example
+alone. Figures are unaffected -- six seeded examples render byte-identically
+before and after -- and all 244 tests still pass.
 
 ## Test environments
 
@@ -33,14 +42,16 @@ which cannot trigger this NOTE on its own.
 ## R CMD check results
 
 The test environments above are for the 1.0.2 tarball as it stood before the
-examples-timing fix; none of them reproduced the Debian NOTE, which is exactly
-why it was not caught before the first submission. After the fix, a local
-`R CMD check --as-cran` re-run confirms `checking examples ... OK` with no
-CPU-time NOTE, all 244 tests still passing, and no other regression. This
-fixed tarball has not yet been re-run on win-builder or R-hub; that should be
-done before resubmitting, since neither of those caught the Debian-specific
-timing in the first place and the margin is not one to be confident of based
-on local timing alone.
+examples-timing fix; none of them reproduced the Debian NOTE, which is why it
+was not caught before the first submission. Their reported timings were also
+not a reliable guide, because a plain `R CMD check` prints the timings table
+for information without raising a NOTE, and the `--run-donttest` pass
+overwrites the timings file; CRAN's incoming report is what escalates an
+over-threshold entry to a NOTE.
+
+After the fix, a local `R CMD check --as-cran` gives `checking examples ...
+OK`, all 244 tests passing, and no other change. The remaining ERROR, WARNING
+and NOTEs are the local-machine artefacts described below.
 
 There were no ERRORs or WARNINGs on any of the platforms below. All four
 remote platforms ran the package's testthat suite (244 expectations) with no
