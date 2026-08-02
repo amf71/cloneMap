@@ -2,6 +2,26 @@
 
 This is a first submission. cloneMap has not previously been on CRAN.
 
+This is a resubmission of version 1.0.2 (not yet accepted, so the version
+number is unchanged). The initial submission failed CRAN's automatic incoming
+checks on the Debian flavour with an examples-timing NOTE:
+
+    Examples with CPU (user + system) or elapsed time > 5s
+              user system elapsed
+    cloneMap 5.834  0.195   6.033
+
+None of local macOS, win-builder Windows, or R-hub's Ubuntu/Windows/macOS
+runs (below) had reproduced this -- the two live examples ran in under a
+second of CPU time combined on all of them, and the total including package
+load stayed under 5s. CRAN's own Debian checker is evidently slower or more
+loaded than any of those, and the previous margin (two live examples at
+resolution.index = 40) was not enough. Rather than trim resolution further
+against an unmeasured target, the second live example (the unrooted-tree
+case) has been moved into `\donttest{}`, leaving one live example. This
+removes essentially all of the package's own contribution to examples time,
+so the only remaining component is R's fixed one-off package/namespace load,
+which cannot trigger this NOTE on its own.
+
 ## Test environments
 
 * local macOS install (arm64, Apple silicon), R 4.5.3
@@ -12,8 +32,19 @@ This is a first submission. cloneMap has not previously been on CRAN.
 
 ## R CMD check results
 
-There were no ERRORs or WARNINGs on any platform. All four remote platforms
-above ran the package's testthat suite (244 expectations) with no failures.
+The test environments above are for the 1.0.2 tarball as it stood before the
+examples-timing fix; none of them reproduced the Debian NOTE, which is exactly
+why it was not caught before the first submission. After the fix, a local
+`R CMD check --as-cran` re-run confirms `checking examples ... OK` with no
+CPU-time NOTE, all 244 tests still passing, and no other regression. This
+fixed tarball has not yet been re-run on win-builder or R-hub; that should be
+done before resubmitting, since neither of those caught the Debian-specific
+timing in the first place and the margin is not one to be confident of based
+on local timing alone.
+
+There were no ERRORs or WARNINGs on any of the platforms below. All four
+remote platforms ran the package's testthat suite (244 expectations) with no
+failures.
 
 The local macOS run reported 1 ERROR and 1 WARNING in addition to the NOTEs
 below; both are the PDF reference manual failing to typeset because that
