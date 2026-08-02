@@ -166,6 +166,16 @@
 #' cloneMap( tree_example, CCFs_example_2 )
 #' }
 #'
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices colorRampPalette
+#' @importFrom methods as
+#' @importFrom raster extent plot raster rasterToPolygons
+#' @importFrom sf st_as_sf
+#' @importFrom smoothr smooth
+#' @importFrom stats dist quantile
+#' @importFrom utils setTxtProgressBar txtProgressBar
+#' @importFrom vegan diversity
+#'
 #' @export
 cloneMap <- function( tree.mat = NA, CCF.data = NA, clone_map = NA, output.Clone.map.obj = FALSE,
                       plot.data = TRUE, high_qualty_mode = FALSE, track = NA, brewer.palette = "Paired",
