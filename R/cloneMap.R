@@ -113,7 +113,7 @@
 #' @examples
 #' # example objects provided in env after loading package #
 #'
-#' # This example passes a reduced resolution.index so that it runs quickly. #
+#' # These examples pass a reduced resolution.index so that they run quickly. #
 #' # The default of 100 gives smoother, publication quality output and is what #
 #' # you would normally use - see the donttest examples below. #
 #'
@@ -121,7 +121,6 @@
 #'
 #' cloneMap( tree_example, CCFs_example_2, resolution.index = 40 )
 #'
-#' \donttest{
 #' # a tree containing unrelated clones, i.e. an unrooted tree, as is common #
 #' # in data derived from normal tissues #
 #'
@@ -144,6 +143,7 @@
 #' cloneMap( tree_example, CCFs_example_2, clone.cols = clone_colours_example,
 #'           resolution.index = 40 )
 #'
+#' \donttest{
 #' # add a border around the plot area to make clearer the % of the tissue #
 #' # containing mutant clones #
 #'
