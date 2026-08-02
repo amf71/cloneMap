@@ -19,16 +19,18 @@ raster/terra/sf initialisation rather than any work the example does.
 
 The imports are now declared, which moves that cost into
 `library(cloneMap)`, where it is not counted against the examples budget.
-The unrooted-tree example was also moved into `\donttest{}`, leaving one
-live example.
+With that headroom, five illustrative examples (six `cloneMap()` calls: a
+rooted tree, an unrooted/polyclonal tree, the clone_map-object replot
+pattern, and a colour-matched pair) are live; three further variants that
+add resolution or cosmetic detail rather than a new usage pattern
+(tissue border, `space_fraction`, and the publication-quality default
+resolution) remain in `\donttest{}`.
 
 Measured with the `--run-donttest` pass disabled, so that the timings file
 records the live examples rather than being overwritten by the donttest run,
-user+system time for the `cloneMap` topic falls from 3.19s to 0.68s on the
-test machine. That machine measured 3.72s for the same tarball CRAN measured
-at 6.03s, a factor of 1.62; at that factor the current figure projects to
-roughly 1.1s, against 5.2s for the intermediate fix that trimmed the example
-alone. Figures are unaffected -- six seeded examples render byte-identically
+user+system time for the `cloneMap` topic is 2.04s on the test machine, a
+34% margin below the 5s ceiling once scaled to CRAN's Debian pretest (see
+below). Figures are unaffected -- six seeded examples render byte-identically
 before and after -- and all 244 tests still pass.
 
 ## Test environments
@@ -52,6 +54,11 @@ over-threshold entry to a NOTE.
 After the fix, a local `R CMD check --as-cran` gives `checking examples ...
 OK`, all 244 tests passing, and no other change. The remaining ERROR, WARNING
 and NOTEs are the local-machine artefacts described below.
+
+The test machine measured 3.72s for the originally-submitted tarball, which
+CRAN's Debian pretest measured at 6.03s -- a scaling factor of 1.62x. At that
+factor, the current examples time (2.04s locally) projects to roughly 3.3s
+on CRAN's Debian machine, comfortably under the 5s ceiling.
 
 There were no ERRORs or WARNINGs on any of the platforms below. All four
 remote platforms ran the package's testthat suite (244 expectations) with no
