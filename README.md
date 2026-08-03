@@ -7,15 +7,7 @@
 A function to map the distribution of somatic clones in sample or set of samples, accounting for the clone size(s), *ie* the Cancer Cell Fraction (CCF), and phylogenetic relationships between clones. Clone positions are semi-randomised in the plot while maintaining the two formally described factors.  
 
 
-## Papers using cloneMap
-
-* Al Bakir M, et al. *Nature* 616, 534–542 (2023).
-* Frankell AM, et al. *Nature* 616, 525–533 (2023).
-* Grigoriadis K, et al. *Nat Protoc* 19, 159–183 (2024).
-* Abbosh C, et al. *Nature* 616, 553–562 (2023).
-* Gómez-López S, et al. *Science* 388, eads9145 (2025).
-
-If you've used cloneMap in a publication, please let us know so we can add it to this list.
+*Used in: Frankell AM, et al. Nature 616, 525–533 (2023); Al Bakir M, et al. Nature 616, 534–542 (2023); Abbosh C, et al. Nature 616, 553–562 (2023); Grigoriadis K, et al. Nat Protoc 19, 159–183 (2024); Gómez-López S, et al. Science 388, eads9145 (2025).*
 
 
 ## Installation & loading
