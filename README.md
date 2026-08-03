@@ -2,6 +2,15 @@
 # cloneMap
 
 
+## Papers using cloneMap
+
+* Al Bakir M, Huebner A, Martínez-Ruiz C, et al. [The evolution of non-small cell lung cancer metastases in TRACERx](https://www.researchgate.net/publication/362321922_cloneMap_a_R_package_to_visualise_clonal_heterogeneity). *Nature* 616, 534–542 (2023). *States that subclone CCF depictions in Figs. 3 and 4 "were generated using the cloneMap R package (v.1.0.0)".*
+* Grigoriadis K, Huebner A, Bunkum A, Colliver E, Frankell AM, et al. CONIPHER: a computational framework for scalable phylogenetic reconstruction with error correction. *Nat Protoc* 19, 159–183 (2024).
+* Abbosh C, Frankell AM, et al. [Tracking early lung cancer metastatic dissemination in TRACERx using ctDNA](https://www.nature.com/articles/s41586-023-05776-4). *Nature* 616, 553–562 (2023).
+* Gómez-López S, Alhendi ASN, Przybilla MJ, Bordeu I, et al. Aberrant basal cell clonal dynamics shape early lung carcinogenesis. *Science* 388, eads9145 (2025).
+
+If you've used cloneMap in a publication, please let us know so we can add it to this list.
+
 ## Description
 
 A function to map the distribution of somatic clones in sample or set of samples, accounting for the clone size(s), *ie* the Cancer Cell Fraction (CCF), and phylogenetic relationships between clones. Clone positions are semi-randomised in the plot while maintaining the two formally described factors.  
