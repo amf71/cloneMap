@@ -9,11 +9,11 @@ A function to map the distribution of somatic clones in sample or set of samples
 
 ## Papers using cloneMap
 
-* Al Bakir M, Huebner A, Martínez-Ruiz C, et al. *Nature* 616, 534–542 (2023).
-* Frankell AM, Dietzen M, Al Bakir M, et al. *Nature* 616, 525–533 (2023).
-* Grigoriadis K, Huebner A, Bunkum A, Colliver E, Frankell AM, et al. *Nat Protoc* 19, 159–183 (2024).
-* Abbosh C, Frankell AM, et al. *Nature* 616, 553–562 (2023).
-* Gómez-López S, Alhendi ASN, Przybilla MJ, Bordeu I, et al. *Science* 388, eads9145 (2025).
+* Al Bakir M, et al. *Nature* 616, 534–542 (2023).
+* Frankell AM, et al. *Nature* 616, 525–533 (2023).
+* Grigoriadis K, et al. *Nat Protoc* 19, 159–183 (2024).
+* Abbosh C, et al. *Nature* 616, 553–562 (2023).
+* Gómez-López S, et al. *Science* 388, eads9145 (2025).
 
 If you've used cloneMap in a publication, please let us know so we can add it to this list.
 
